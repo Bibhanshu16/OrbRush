@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>AirPad: Neon Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #050811;
+      color: #f8fafc;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .touch-zone {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .game-title-glow {
+      text-shadow: 0 0 28px rgba(56, 189, 248, 0.55), 0 0 64px rgba(192, 38, 211, 0.35);
+    }
+    .arcade-btn {
+      transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.12s ease;
+    }
+    .arcade-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+    .arcade-btn:active {
+      transform: scale(0.96);
+    }
+    .hud-pill {
+      background: rgba(7, 12, 24, 0.68);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    .joy-base {
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0.78) 70%, rgba(56, 189, 248, 0.22) 100%);
+      box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(125, 211, 252, 0.28);
+    }
+    .joy-knob {
+      background: radial-gradient(circle at 35% 30%, #bae6fd 0%, #0284c7 65%, #0369a1 100%);
+      box-shadow: 0 6px 18px rgba(2, 132, 199, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+      transition: transform 0.04s linear;
+    }
+    .btn-pad {
+      transition: transform 0.07s ease, filter 0.07s ease;
+    }
+    .btn-pad.pressed, .btn-pad:active {
+      transform: scale(0.91);
+      filter: brightness(1.22);
+    }
+    .glass-modal {
+      background: rgba(9, 14, 28, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-[#050811]">
+
+  <!-- FULL-SCREEN LIVE GAME CANVAS -->
+  <div id="arenaViewport" class="fixed inset-0 w-full h-full">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <!-- FLOATING IN-GAME ARCADE HUD (Hidden on Title Screen & Full Phone Pad Mode) -->
+  <div id="inGameHud" class="hidden fixed inset-x-0 top-0 z-20 p-3 sm:p-4 flex items-start justify-between gap-2 pointer-events-none">
+    <!-- Top-Left: Player Scores -->
+    <div id="hudPlayers" class="flex items-center gap-1.5 sm:gap-2 flex-wrap pointer-events-auto max-w-[44%]"></div>
+
+    <!-- Top-Center: Arcade Timer -->
+    <div class="hud-pill px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg pointer-events-auto">
+      <span id="hudTimer" class="text-base sm:text-xl font-black font-mono tracking-wider text-sky-400">60</span>
+    </div>
+
+    <!-- Top-Right: Minimal Game Icon Controls -->
+    <div class="flex items-center gap-1.5 pointer-events-auto">
+      <button id="hudTogglePadBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle on-screen touch controller">
+        🎮
+      </button>
+      <button id="hudPairBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:border-emerald-400/60 transition" title="Pair Mobile Phone">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="hidden sm:inline">Phones</span>
+        <span id="hudControllerCount" class="font-mono">1</span>
+      </button>
+      <button id="hudSoundBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Mute / Unmute">
+        <span id="soundIcon">🔊</span>
+      </button>
+      <button id="hudPauseBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white hover:border-sky-400/60 transition" title="Pause / Menu">
+        ⏸
+      </button>
+    </div>
+  </div>
+
+  <!-- FLOATING ON-SCREEN TOUCH CONTROLLER (In-Game Overlay for Touch / Split Play) -->
+  <div id="touchOverlay" class="hidden fixed inset-x-0 bottom-0 z-20 p-4 sm:p-6 flex items-end justify-between pointer-events-none touch-zone">
+    <!-- Bottom-Left: Floating Analog Thumbstick -->
+    <div id="overlayJoyBase" class="joy-base touch-zone pointer-events-auto relative w-32 h-32 sm:w-36 sm:h-36 rounded-full flex items-center justify-center opacity-85 hover:opacity-100 transition-opacity">
+      <div class="pointer-events-none absolute inset-3 rounded-full border border-dashed border-sky-300/25"></div>
+      <div id="overlayJoyKnob" class="joy-knob pointer-events-none w-14 h-14 rounded-full border border-sky-200/60"></div>
+    </div>
+
+    <!-- Bottom-Right: Floating Action Buttons -->
+    <div class="flex items-end gap-2.5 sm:gap-3 pointer-events-auto">
+      <button id="overlayBoostBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-400/90 to-orange-600/90 text-slate-950 font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
+        <span class="text-sm sm:text-base leading-none">⚡</span>
+        <span>BOOST</span>
+      </button>
+      <button id="overlayPulseBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-fuchsia-400/90 to-purple-700/90 text-white font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
+        <span class="text-sm sm:text-base leading-none">💥</span>
+        <span>PULSE</span>
+      </button>
+      <button id="overlayFireBtn" type="button" class="btn-pad touch-zone w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-400/95 to-red-600/95 text-white font-black text-xs tracking-wide shadow-[0_6px_26px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
+        <span class="text-base sm:text-lg leading-none">🎯</span>
+        <span>FIRE</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- FULL-SCREEN GAME TITLE / START MENU SCREEN -->
+  <div id="titleScreen" class="fixed inset-0 z-30 flex flex-col items-center justify-between p-5 sm:p-8 bg-gradient-to-b from-slate-950/60 via-slate-950/45 to-slate-950/80 backdrop-blur-[3px]">
+    <!-- Top Floating Status & Utility Icons (Game Style, Not a Navbar) -->
+    <div class="w-full max-w-5xl flex items-center justify-between">
+      <div class="hud-pill px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold text-emerald-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="titleConnStatus">1 Controller Ready · Serverless P2P</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="titleSoundBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle Sound">
+          <span id="titleSoundIcon">🔊</span>
+        </button>
+        <button id="titleGuideBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold text-sky-300 hover:border-sky-400/60 transition" title="How Serverless Mode Works">
+          ?
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Arcade Logo & Game Menu -->
+    <div class="flex flex-col items-center text-center w-full max-w-md space-y-5 my-auto">
+      <div class="space-y-1.5">
+        <div class="text-[11px] font-black uppercase tracking-[0.32em] text-sky-400/90">
+          Wireless Arcade Arena
+        </div>
+        <h1 class="game-title-glow text-5xl sm:text-6xl font-black tracking-tight text-white leading-none">
+          NEON <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-fuchsia-400">ARENA</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300/90 font-medium">
+          Control from your phone screen · Zero server required
+        </p>
+      </div>
+
+      <!-- Main Arcade Buttons -->
+      <div class="w-full space-y-2.5">
+        <button id="playNowBtn" type="button" class="arcade-btn w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 text-slate-950 font-black text-base sm:text-lg tracking-wide shadow-[0_0_32px_rgba(56,189,248,0.45)] flex items-center justify-center gap-2">
+          <span>▶</span>
+          <span>PLAY GAME</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <button id="startHostBtn" type="button" class="arcade-btn hud-pill py-3 px-3 rounded-2xl text-xs sm:text-sm font-extrabold text-white hover:border-sky-400/60 flex items-center justify-center gap-1.5">
+            <span>📺</span>
+            <span>TV HOST</span>
+          </button>
+          <button id="joinPhoneBtn" type="button" class="arcade-btn hud-pill py-3 px-3 rounded-2xl text-xs sm:text-sm font-extrabold text-fuchsia-300 hover:border-fuchsia-400/60 flex items-center justify-center gap-1.5">
+            <span>📱</span>
+            <span>PHONE PAD</span>
+          </button>
+        </div>
+
+        <button id="titlePairBtn" type="button" class="arcade-btn hud-pill w-full py-2.5 px-4 rounded-xl text-xs font-bold text-emerald-300 border-emerald-500/35 hover:border-emerald-400/70 flex items-center justify-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>PAIR MOBILE CONTROLLER (NO SERVER)</span>
+        </button>
+      </div>
+
+      <!-- Compact Match Settings Pills -->
+      <div class="hud-pill w-full rounded-2xl p-2.5 flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-1">
+          <button id="menuMode60Btn" type="button" class="px-2.5 py-1.5 rounded-lg font-extrabold bg-sky-500 text-slate-950 transition">60s</button>
+          <button id="menuModeEndlessBtn" type="button" class="px-2.5 py-1.5 rounded-lg font-extrabold text-slate-300 hover:text-white transition">Endless</button>
+        </div>
+
+        <div class="h-5 w-px bg-slate-700/80"></div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bots</span>
+          <button id="menuBotDecBtn" type="button" class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-white font-black transition">−</button>
+          <span id="menuBotCountLabel" class="w-4 text-center font-black text-white">1</span>
+          <button id="menuBotIncBtn" type="button" class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-white font-black transition">+</button>
+        </div>
+
+        <div class="h-5 w-px bg-slate-700/80"></div>
+
+        <button id="menuColorBtn" type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 transition" title="Change Player Color">
+          <span id="menuColorDot" class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
+          <span class="font-bold text-slate-200">Color</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Controls Hint -->
+    <div class="text-[11px] font-semibold text-slate-400/90 tracking-wide text-center">
+      WASD / Arrows · F / Enter Fire · Space Boost · Shift Pulse
+    </div>
+  </div>
+
+  <!-- FULL-SCREEN DEDICATED MOBILE GAMEPAD MODE (When opened on a phone) -->
+  <div id="phonePadScreen" class="hidden fixed inset-0 z-30 bg-[#070b15] flex flex-col justify-between p-4 sm:p-6 touch-zone">
+    <!-- Top Floating Controller Status -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <button id="padBackToTitleBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200 hover:border-sky-400/60" title="Back to Title Screen">
+          ◀
+        </button>
+        <div class="hud-pill px-3 py-1.5 rounded-xl flex items-center gap-2">
+          <span id="padColorDot" class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_10px_#38bdf8]"></span>
+          <span id="padPlayerLabel" class="text-xs font-extrabold text-white">Player 1</span>
+          <span id="padConnPill" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">Not Paired</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button id="padSwitchColorBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl text-xs font-bold text-slate-200">Color</button>
+        <button id="padOpenPairBtn" type="button" class="px-3 h-9 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25">
+          Connect TV
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Gamepad Surface (Landscape & Portrait Friendly) -->
+    <div class="flex-1 flex flex-col sm:flex-row items-center justify-around gap-8 py-4 touch-zone">
+      <!-- Left: Large Virtual Thumbstick -->
+      <div class="flex flex-col items-center gap-2.5">
+        <div id="fullJoyBase" class="joy-base touch-zone relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center">
+          <div class="pointer-events-none absolute inset-5 rounded-full border border-dashed border-sky-300/25"></div>
+          <div class="pointer-events-none absolute top-3 text-xs font-bold text-slate-500">▲</div>
+          <div class="pointer-events-none absolute bottom-3 text-xs font-bold text-slate-500">▼</div>
+          <div class="pointer-events-none absolute left-3.5 text-xs font-bold text-slate-500">◀</div>
+          <div class="pointer-events-none absolute right-3.5 text-xs font-bold text-slate-500">▶</div>
+          <div id="fullJoyKnob" class="joy-knob pointer-events-none w-20 h-20 rounded-full border-2 border-sky-200/60"></div>
+        </div>
+        <span id="padTelemetry" class="text-[11px] font-mono text-slate-400">X: 0.00 · Y: 0.00</span>
+      </div>
+
+      <!-- Right: Tactile Arcade Action Buttons -->
+      <div class="flex items-center gap-3.5 sm:gap-5">
+        <button id="fullBoostBtn" type="button" class="btn-pad touch-zone w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-slate-950 font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_30px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
+          <span class="text-xl sm:text-2xl leading-none mb-1">⚡</span>
+          <span>BOOST</span>
+        </button>
+        <button id="fullPulseBtn" type="button" class="btn-pad touch-zone w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-fuchsia-400 to-purple-700 text-white font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_30px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
+          <span class="text-xl sm:text-2xl leading-none mb-1">💥</span>
+          <span>PULSE</span>
+        </button>
+        <button id="fullFireBtn" type="button" class="btn-pad touch-zone w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-rose-400 to-red-600 text-white font-black text-sm tracking-wider shadow-[0_10px_32px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
+          <span class="text-2xl leading-none mb-1">🎯</span>
+          <span>FIRE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Live Telemetry Strip -->
+    <div class="hud-pill rounded-2xl px-4 py-2.5 flex items-center justify-between text-xs font-bold">
+      <span class="text-slate-400">ENERGY <strong id="padEnergyText" class="text-amber-400 ml-1">100%</strong></span>
+      <span class="text-slate-400">SCORE <strong id="padScoreText" class="text-sky-400 ml-1">0</strong></span>
+      <span id="padTransportLabel" class="text-emerald-300">Standby</span>
+    </div>
+  </div>
+
+  <!-- IN-GAME PAUSE / GAME OVER OVERLAY -->
+  <div id="gameOverlay" class="hidden fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-modal rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
+      <div id="overlayBadge" class="inline-block px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-sky-500/20 text-sky-300">
+        Paused
+      </div>
+      <h2 id="overlayTitle" class="text-3xl font-black text-white">Game Paused</h2>
+      <p id="overlayDesc" class="text-xs text-slate-300">Take a breather or jump back into the arena.</p>
+      <div id="overlayScores" class="space-y-1.5 text-left"></div>
+      <div class="space-y-2 pt-1">
+        <button id="overlayPrimaryBtn" type="button" class="arcade-btn w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-sm shadow-lg shadow-sky-500/25">
+          Resume
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="overlayRestartBtn" type="button" class="arcade-btn py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700">
+            Restart
+          </button>
+          <button id="overlayMenuBtn" type="button" class="arcade-btn py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
+            Title Screen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZERO-SERVER PAIRING LOBBY MODAL -->
+  <div id="pairModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="glass-modal rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin p-5 sm:p-6 shadow-2xl">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-black text-white">Pair Phone Controller (No Server)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Direct peer-to-peer HTML5 WebRTC DataChannel or same-browser BroadcastChannel.</p>
+        </div>
+        <button id="closePairModalBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
+      </div>
+
+      <div class="flex gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 mb-4">
+        <button id="tabWebRTCHost" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">
+          1. TV Host
+        </button>
+        <button id="tabWebRTCPad" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+          2. Phone Pad
+        </button>
+        <button id="tabBroadcast" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+          3. Same Browser
+        </button>
+      </div>
+
+      <!-- TAB 1: TV HOST WEBRTC -->
+      <div id="paneWebRTCHost" class="space-y-3.5">
+        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-sky-400">Step 1 · Generate Offer Code on TV</span>
+            <button id="hostCreateOfferBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-sky-400 hover:bg-sky-300 text-slate-950 transition">
+              Generate Code
+            </button>
+          </div>
+          <textarea id="hostOfferOutput" readonly rows="3" placeholder="Click 'Generate Code' to create a serverless WebRTC offer..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-300 focus:outline-none focus:border-sky-500"></textarea>
+          <div class="flex items-center justify-between">
+            <span id="hostOfferStatus" class="text-[11px] text-slate-400">Ready to pair a new phone.</span>
+            <button id="hostCopyOfferBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+              Copy Offer
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
+          <span class="text-xs font-bold text-emerald-400 block">Step 2 · Paste Reply Code from Phone</span>
+          <textarea id="hostAnswerInput" rows="3" placeholder="Paste the Phone's Reply Code here..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+          <button id="hostAcceptAnswerBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+            Connect Phone Controller
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: PHONE PAD WEBRTC -->
+      <div id="paneWebRTCPad" class="hidden space-y-3.5">
+        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
+          <span class="text-xs font-bold text-sky-400 block">Step 1 · Paste TV Offer Code</span>
+          <textarea id="padOfferInput" rows="3" placeholder="Paste the Offer Code copied from the TV screen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
+          <button id="padCreateAnswerBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-sky-400 hover:bg-sky-300 text-slate-950 transition">
+            Generate Reply Code
+          </button>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-emerald-400">Step 2 · Send Reply Code back to TV</span>
+            <button id="padCopyAnswerBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+              Copy Reply
+            </button>
+          </div>
+          <textarea id="padAnswerOutput" readonly rows="3" placeholder="Your Reply Code will appear here..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-300 focus:outline-none"></textarea>
+          <p id="padRtcStatus" class="text-[11px] text-slate-400">Once TV pastes this code, your phone links directly over P2P.</p>
+        </div>
+      </div>
+
+      <!-- TAB 3: BROADCAST CHANNEL -->
+      <div id="paneBroadcast" class="hidden space-y-3">
+        <div class="p-4 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-3">
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Open this HTML file in <strong>two browser tabs</strong> on the same device: pick <strong>TV HOST</strong> in Tab 1 and <strong>PHONE PAD</strong> in Tab 2, then tap below to link instantly.
+          </p>
+          <button id="connectBroadcastBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-500 hover:bg-indigo-400 text-white transition">
+            Link Phone Pad via BroadcastChannel
+          </button>
+          <p id="broadcastStatus" class="text-[11px] text-slate-400 text-center">Native HTML5 BroadcastChannel API (0ms latency).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS MODAL -->
+  <div id="guideModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="glass-modal rounded-3xl max-w-lg w-full max-h-[88vh] overflow-y-auto scrollbar-thin p-5 sm:p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-black text-white">Serverless HTML5 Game Architecture</h2>
+          <p class="text-xs text-slate-400 mt-0.5">How this game connects phones with zero backend server.</p>
+        </div>
+        <button id="closeGuideModalBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+          <h3 class="font-bold text-sky-400 mb-1">1. Peer-to-Peer WebRTC DataChannel</h3>
+          <p>Uses native <code class="text-sky-300">RTCPeerConnection</code> + unreliable <code class="text-sky-300">RTCDataChannel</code> (<code class="text-sky-300">ordered: false, maxRetransmits: 0</code>) for ultra-low-latency gamepad input directly between phone and TV.</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+          <h3 class="font-bold text-emerald-400 mb-1">2. Multi-Touch Pointer Events</h3>
+          <p>The virtual thumbstick and Boost/Pulse buttons use <code class="text-emerald-300">PointerEvents</code> with <code class="text-emerald-300">touch-action: none</code> and <code class="text-emerald-300">navigator.vibrate()</code> for smooth console-like phone controls.</p>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+          <h3 class="font-bold text-amber-400 mb-1">3. Static File Deployment</h3>
+          <p>Drop this single <code class="text-amber-300">.html</code> file on GitHub Pages or Netlify Drop. Opening the URL launches straight into this full-screen game with no website chrome.</p>
+        </div>
+      </div>
+
+      <button id="closeGuideBottomBtn" type="button" class="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-xs transition">
+        Back to Game
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Toast -->
+  <div id="toast" class="pointer-events-none fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 border border-sky-400/40 text-xs font-bold text-white shadow-2xl opacity-0 transition-opacity duration-200">
+    Notice
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      // 1. WEB AUDIO SYNTHESIZER
+      // ============================================================
+      const AudioFX = {
+        ctx: null,
+        muted: false,
+        unlock() {
+          if (!this.ctx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) this.ctx = new Ctx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        },
+        beep(freq, duration, type, volume, slideTo) {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+            gain.gain.setValueAtTime(volume || 0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + duration);
+          } catch (_) {}
+        },
+        orb() { this.beep(660, 0.1, 'triangle', 0.11, 990); },
+        star() {
+          this.beep(880, 0.14, 'sine', 0.14, 1320);
+          setTimeout(() => this.beep(1320, 0.18, 'triangle', 0.12, 1760), 70);
+        },
+        pulse() { this.beep(220, 0.22, 'sawtooth', 0.12, 65); },
+        hit() { this.beep(150, 0.18, 'square', 0.1, 55); },
+        boost() { this.beep(320, 0.08, 'sine', 0.05, 440); },
+        shoot() { this.beep(920, 0.09, 'sawtooth', 0.09, 260); },
+        win() {
+          [523, 659, 784, 1046].forEach((f, i) => {
+            setTimeout(() => this.beep(f, 0.18, 'triangle', 0.12), i * 95);
+          });
+        }
+      };
+
+      // ============================================================
+      // 2. TOAST & CLIPBOARD HELPERS
+      // ============================================================
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('opacity-0');
+        el.classList.add('opacity-100');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.remove('opacity-100');
+          el.classList.add('opacity-0');
+        }, 2300);
+      }
+
+      function copyText(text, successMsg) {
+        if (!text) { showToast('Nothing to copy yet.'); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast(successMsg || 'Copied!')).catch(() => fallbackCopy(text, successMsg));
+        } else {
+          fallbackCopy(text, successMsg);
+        }
+      }
+
+      function fallbackCopy(text, successMsg) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); showToast(successMsg || 'Copied!'); } catch (_) { showToast('Copy manually from the box.'); }
+        document.body.removeChild(ta);
+      }
+
+      function vibratePhone(ms) {
+        try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {}
+      }
+
+      // ============================================================
+      // 3. GAME STATE & ENGINE
+      // ============================================================
+      const PLAYER_PALETTE = [
+        { name: 'Cyan', hex: '#38bdf8', glow: 'rgba(56,189,248,0.55)' },
+        { name: 'Emerald', hex: '#34d399', glow: 'rgba(52,211,153,0.55)' },
+        { name: 'Amber', hex: '#fbbf24', glow: 'rgba(251,191,36,0.55)' },
+        { name: 'Rose', hex: '#fb7185', glow: 'rgba(251,113,133,0.55)' },
+        { name: 'Violet', hex: '#a78bfa', glow: 'rgba(167,139,250,0.55)' }
+      ];
+
+      const state = {
+        screen: 'title', // 'title' | 'playing' | 'pad'
+        showTouchOverlay: true,
+        paused: false,
+        gameOver: false,
+        endless: false,
+        menuBotCount: 1,
+        timeLeft: 60,
+        lastFrame: 0,
+        rafId: null,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        shake: 0,
+        players: new Map(),
+        orbs: [],
+        hazards: [],
+        bullets: [],
+        floatTexts: [],
+        particles: [],
+        rings: [],
+        botCount: 0,
+        localColorIdx: 0,
+        keys: { up: false, down: false, left: false, right: false, boost: false, pulse: false, fire: false }
+      };
+
+      function createPlayer(id, label, colorIdx, isBot, source) {
+        const pal = PLAYER_PALETTE[colorIdx % PLAYER_PALETTE.length];
+        return {
+          id,
+          label,
+          colorIdx: colorIdx % PLAYER_PALETTE.length,
+          color: pal.hex,
+          glow: pal.glow,
+          isBot: Boolean(isBot),
+          source: source || 'local',
+          x: 100 + Math.random() * Math.max(120, state.width - 200),
+          y: 100 + Math.random() * Math.max(120, state.height - 200),
+          vx: 0,
+          vy: 0,
+          radius: 18,
+          score: 0,
+          energy: 100,
+          angle: Math.random() * Math.PI * 2,
+          pulseCooldown: 0,
+          fireCooldown: 0,
+          inputX: 0,
+          inputY: 0,
+          boosting: false,
+          firing: false,
+          pulseTrigger: false,
+          hitFlash: 0,
+          trail: []
+        };
+      }
+
+      function spawnOrb(isStar) {
+        const pad = 50;
+        state.orbs.push({
+          x: pad + Math.random() * Math.max(60, state.width - pad * 2),
+          y: pad + Math.random() * Math.max(60, state.height - pad * 2),
+          radius: isStar ? 13 : 8,
+          isStar: Boolean(isStar),
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnHazard() {
+        const pad = 64;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 42 + Math.random() * 48;
+        state.hazards.push({
+          x: pad + Math.random() * Math.max(60, state.width - pad * 2),
+          y: pad + Math.random() * Math.max(60, state.height - pad * 2),
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 15,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnBurst(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const spd = 45 + Math.random() * 200;
+          state.particles.push({
+            x, y,
+            vx: Math.cos(a) * spd,
+            vy: Math.sin(a) * spd,
+            life: 0.35 + Math.random() * 0.35,
+            maxLife: 0.7,
+            size: 2 + Math.random() * 3.5,
+            color
+          });
+        }
+      }
+
+      function resetArenaEntities() {
+        state.orbs = [];
+        state.hazards = [];
+        state.bullets = [];
+        state.floatTexts = [];
+        state.particles = [];
+        state.rings = [];
+        for (let i = 0; i < 10; i++) spawnOrb(false);
+        spawnOrb(true);
+        spawnOrb(true);
+        for (let i = 0; i < 5; i++) spawnHazard();
+      }
+
+      function syncBotsToCount() {
+        Array.from(state.players.keys()).forEach((id) => {
+          const p = state.players.get(id);
+          if (p && p.isBot) state.players.delete(id);
+        });
+        state.botCount = 0;
+        for (let i = 0; i < state.menuBotCount; i++) {
+          state.botCount += 1;
+          const id = 'bot-' + state.botCount;
+          state.players.set(id, createPlayer(id, 'Bot ' + state.botCount, state.players.size, true, 'bot'));
+        }
+      }
+
+      function initGame() {
+        state.players.clear();
+        const p1 = createPlayer('local-p1', 'P1', state.localColorIdx, false, 'local');
+        state.players.set(p1.id, p1);
+        syncBotsToCount();
+        resetArenaEntities();
+        renderHud();
+      }
+
+      function setScreen(screen, withTouchOverlay) {
+        state.screen = screen;
+        if (typeof withTouchOverlay === 'boolean') state.showTouchOverlay = withTouchOverlay;
+
+        const titleEl = document.getElementById('titleScreen');
+        const hudEl = document.getElementById('inGameHud');
+        const touchEl = document.getElementById('touchOverlay');
+        const padEl = document.getElementById('phonePadScreen');
+
+        titleEl.classList.toggle('hidden', screen !== 'title');
+        hudEl.classList.toggle('hidden', screen !== 'playing');
+        padEl.classList.toggle('hidden', screen !== 'pad');
+        touchEl.classList.toggle('hidden', !(screen === 'playing' && state.showTouchOverlay));
+
+        if (screen === 'title') {
+          state.paused = false;
+          state.gameOver = false;
+          document.getElementById('gameOverlay').classList.add('hidden');
+        }
+        renderHud();
+      }
+
+      function startMatch(showTouchPad) {
+        AudioFX.unlock();
+        syncBotsToCount();
+        state.timeLeft = 60;
+        state.paused = false;
+        state.gameOver = false;
+        state.shake = 0;
+        document.getElementById('gameOverlay').classList.add('hidden');
+        state.players.forEach((p) => {
+          p.score = 0;
+          p.energy = 100;
+          p.pulseCooldown = 0;
+          p.vx = 0;
+          p.vy = 0;
+          p.trail = [];
+          p.x = 90 + Math.random() * Math.max(120, state.width - 180);
+          p.y = 90 + Math.random() * Math.max(120, state.height - 180);
+        });
+        resetArenaEntities();
+        setScreen('playing', showTouchPad);
+      }
+
+      function fireShot(player) {
+        if (player.fireCooldown > 0 || player.energy < 6) return;
+        player.energy = Math.max(0, player.energy - 6);
+        player.fireCooldown = 0.24;
+        const speed = 680;
+        const muzzleDist = player.radius + 8;
+        state.bullets.push({
+          ownerId: player.id,
+          color: player.color,
+          x: player.x + Math.cos(player.angle) * muzzleDist,
+          y: player.y + Math.sin(player.angle) * muzzleDist,
+          vx: Math.cos(player.angle) * speed,
+          vy: Math.sin(player.angle) * speed,
+          radius: 5,
+          life: 1.15
+        });
+        // Subtle recoil
+        player.vx -= Math.cos(player.angle) * 45;
+        player.vy -= Math.sin(player.angle) * 45;
+        AudioFX.shoot();
+      }
+
+      function spawnFloatText(x, y, text, color) {
+        state.floatTexts.push({ x, y, text, color, life: 0.75, maxLife: 0.75 });
+      }
+
+      function triggerPulse(player) {
+        if (player.pulseCooldown > 0 || player.energy < 25) return;
+        player.energy = Math.max(0, player.energy - 25);
+        player.pulseCooldown = 0.85;
+        state.rings.push({ x: player.x, y: player.y, r: player.radius, maxR: 145, color: player.color, alpha: 1 });
+        AudioFX.pulse();
+        state.shake = Math.min(11, state.shake + 5);
+
+        state.players.forEach((other) => {
+          if (other.id === player.id) return;
+          const dx = other.x - player.x;
+          const dy = other.y - player.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 150) {
+            const force = (1 - dist / 150) * 540;
+            other.vx += (dx / dist) * force;
+            other.vy += (dy / dist) * force;
+            other.hitFlash = 0.25;
+            spawnBurst(other.x, other.y, player.color, 10);
+          }
+        });
+
+        state.hazards.forEach((h) => {
+          const dx = h.x - player.x;
+          const dy = h.y - player.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 155) {
+            h.vx = (dx / dist) * 200;
+            h.vy = (dy / dist) * 200;
+          }
+        });
+      }
+
+      function updateBotAI(bot, dt) {
+        let target = null;
+        let bestScore = -Infinity;
+        for (const o of state.orbs) {
+          const d = Math.hypot(o.x - bot.x, o.y - bot.y) + 1;
+          const val = (o.isStar ? 350 : 120) / d;
+          if (val > bestScore) { bestScore = val; target = o; }
+        }
+        let ix = 0, iy = 0;
+        if (target) {
+          const dx = target.x - bot.x;
+          const dy = target.y - bot.y;
+          const d = Math.hypot(dx, dy) || 1;
+          ix = dx / d;
+          iy = dy / d;
+        }
+        for (const h of state.hazards) {
+          const dx = bot.x - h.x;
+          const dy = bot.y - h.y;
+          const d = Math.hypot(dx, dy) || 1;
+          if (d < 90) {
+            ix += (dx / d) * 1.8;
+            iy += (dy / d) * 1.8;
+          }
+        }
+        const mag = Math.hypot(ix, iy);
+        if (mag > 1) { ix /= mag; iy /= mag; }
+        bot.inputX = ix;
+        bot.inputY = iy;
+        bot.boosting = target && target.isStar && bot.energy > 40;
+        bot.firing = false;
+        if (state.screen === 'playing') {
+          for (const other of state.players.values()) {
+            if (other.id === bot.id) continue;
+            const dx = other.x - bot.x;
+            const dy = other.y - bot.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 110 && bot.pulseCooldown <= 0 && bot.energy > 45 && Math.random() < dt * 0.45) {
+              triggerPulse(bot);
+              break;
+            }
+            if (dist < 320 && bot.energy > 28 && Math.random() < dt * 1.4) {
+              const targetAngle = Math.atan2(dy, dx);
+              let diff = Math.abs(targetAngle - bot.angle);
+              if (diff > Math.PI) diff = Math.PI * 2 - diff;
+              if (diff < 0.42) {
+                bot.angle = targetAngle;
+                bot.firing = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      function updateSimulation(dt) {
+        // Attract mode live animation on Title Screen
+        if (state.screen === 'title') {
+          for (const h of state.hazards) {
+            h.phase += dt * 3.5;
+            h.x += h.vx * dt * 0.7;
+            h.y += h.vy * dt * 0.7;
+            if (h.x < h.radius || h.x > state.width - h.radius) h.vx *= -1;
+            if (h.y < h.radius || h.y > state.height - h.radius) h.vy *= -1;
+          }
+          state.players.forEach((p) => {
+            updateBotAI(p, dt);
+            p.vx += p.inputX * 680 * dt;
+            p.vy += p.inputY * 680 * dt;
+            const drag = Math.pow(0.08, dt);
+            p.vx *= drag;
+            p.vy *= drag;
+            p.x = Math.max(p.radius, Math.min(state.width - p.radius, p.x + p.vx * dt));
+            p.y = Math.max(p.radius, Math.min(state.height - p.radius, p.y + p.vy * dt));
+            p.trail.push({ x: p.x, y: p.y });
+            if (p.trail.length > 10) p.trail.shift();
+          });
+          return;
+        }
+
+        if (state.screen !== 'playing' || state.paused || state.gameOver) return;
+
+        if (!state.endless) {
+          state.timeLeft -= dt;
+          if (state.timeLeft <= 0) {
+            state.timeLeft = 0;
+            state.gameOver = true;
+            AudioFX.win();
+            showOverlay('gameover');
+            renderHud();
+            return;
+          }
+        }
+
+        const p1 = state.players.get('local-p1');
+        if (p1) {
+          const kx = (state.keys.right ? 1 : 0) - (state.keys.left ? 1 : 0);
+          const ky = (state.keys.down ? 1 : 0) - (state.keys.up ? 1 : 0);
+          if (kx !== 0 || ky !== 0) {
+            const m = Math.hypot(kx, ky) || 1;
+            p1.inputX = kx / m;
+            p1.inputY = ky / m;
+          } else if (!padState.dragging) {
+            p1.inputX = 0;
+            p1.inputY = 0;
+          }
+          p1.boosting = state.keys.boost || padState.boosting;
+          p1.firing = state.keys.fire || padState.firing;
+          if (state.keys.pulse) {
+            triggerPulse(p1);
+            state.keys.pulse = false;
+          }
+        }
+
+        state.players.forEach((p) => {
+          if (p.isBot) updateBotAI(p, dt);
+          if (Math.hypot(p.inputX, p.inputY) > 0.12) {
+            p.angle = Math.atan2(p.inputY, p.inputX);
+          }
+          if (p.pulseTrigger) { triggerPulse(p); p.pulseTrigger = false; }
+          if (p.pulseCooldown > 0) p.pulseCooldown = Math.max(0, p.pulseCooldown - dt);
+          if (p.fireCooldown > 0) p.fireCooldown = Math.max(0, p.fireCooldown - dt);
+          if (p.firing) fireShot(p);
+          if (p.hitFlash > 0) p.hitFlash = Math.max(0, p.hitFlash - dt);
+
+          const isBoosting = p.boosting && p.energy > 2 && (Math.abs(p.inputX) > 0.05 || Math.abs(p.inputY) > 0.05);
+          if (isBoosting) {
+            p.energy = Math.max(0, p.energy - 42 * dt);
+            if (Math.random() < 0.35) spawnBurst(p.x, p.y, '#fbbf24', 1);
+          } else {
+            p.energy = Math.min(100, p.energy + 22 * dt);
+          }
+
+          const accel = isBoosting ? 1520 : 940;
+          p.vx += p.inputX * accel * dt;
+          p.vy += p.inputY * accel * dt;
+
+          const drag = Math.pow(0.06, dt);
+          p.vx *= drag;
+          p.vy *= drag;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          if (p.x < p.radius) { p.x = p.radius; p.vx = Math.abs(p.vx) * 0.6; }
+          if (p.x > state.width - p.radius) { p.x = state.width - p.radius; p.vx = -Math.abs(p.vx) * 0.6; }
+          if (p.y < p.radius) { p.y = p.radius; p.vy = Math.abs(p.vy) * 0.6; }
+          if (p.y > state.height - p.radius) { p.y = state.height - p.radius; p.vy = -Math.abs(p.vy) * 0.6; }
+
+          p.trail.push({ x: p.x, y: p.y });
+          if (p.trail.length > 10) p.trail.shift();
+
+          for (let i = state.orbs.length - 1; i >= 0; i--) {
+            const o = state.orbs[i];
+            if (Math.hypot(p.x - o.x, p.y - o.y) < p.radius + o.radius + 2) {
+              p.score += o.isStar ? 50 : 10;
+              p.energy = Math.min(100, p.energy + (o.isStar ? 35 : 12));
+              spawnBurst(o.x, o.y, o.isStar ? '#facc15' : p.color, o.isStar ? 18 : 9);
+              if (o.isStar) AudioFX.star(); else AudioFX.orb();
+              const wasStar = o.isStar;
+              state.orbs.splice(i, 1);
+              spawnOrb(wasStar);
+            }
+          }
+
+          for (const h of state.hazards) {
+            const dx = p.x - h.x;
+            const dy = p.y - h.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            if (dist < p.radius + h.radius) {
+              p.vx = (dx / dist) * 350;
+              p.vy = (dy / dist) * 350;
+              p.score = Math.max(0, p.score - 15);
+              p.hitFlash = 0.35;
+              state.shake = Math.min(12, state.shake + 6);
+              spawnBurst(p.x, p.y, '#ef4444', 14);
+              AudioFX.hit();
+              h.vx = -(dx / dist) * 95;
+              h.vy = -(dy / dist) * 95;
+            }
+          }
+        });
+
+        for (const h of state.hazards) {
+          h.phase += dt * 4;
+          h.x += h.vx * dt;
+          h.y += h.vy * dt;
+          if (h.x < h.radius || h.x > state.width - h.radius) h.vx *= -1;
+          if (h.y < h.radius || h.y > state.height - h.radius) h.vy *= -1;
+          h.x = Math.max(h.radius, Math.min(state.width - h.radius, h.x));
+          h.y = Math.max(h.radius, Math.min(state.height - h.radius, h.y));
+        }
+
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const pt = state.particles[i];
+          pt.life -= dt;
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vx *= 0.94;
+          pt.vy *= 0.94;
+          if (pt.life <= 0) state.particles.splice(i, 1);
+        }
+
+        for (let i = state.bullets.length - 1; i >= 0; i--) {
+          const b = state.bullets[i];
+          b.life -= dt;
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          if (b.life <= 0 || b.x < 0 || b.x > state.width || b.y < 0 || b.y > state.height) {
+            spawnBurst(Math.max(4, Math.min(state.width - 4, b.x)), Math.max(4, Math.min(state.height - 4, b.y)), b.color, 4);
+            state.bullets.splice(i, 1);
+            continue;
+          }
+
+          let hitSomething = false;
+          // Hit rival players
+          for (const other of state.players.values()) {
+            if (other.id === b.ownerId) continue;
+            if (Math.hypot(other.x - b.x, other.y - b.y) < other.radius + b.radius) {
+              const spd = Math.hypot(b.vx, b.vy) || 1;
+              other.vx += (b.vx / spd) * 320;
+              other.vy += (b.vy / spd) * 320;
+              other.hitFlash = 0.28;
+              other.score = Math.max(0, other.score - 10);
+              const shooter = state.players.get(b.ownerId);
+              if (shooter) shooter.score += 20;
+              state.shake = Math.min(10, state.shake + 4);
+              spawnBurst(b.x, b.y, b.color, 14);
+              spawnFloatText(other.x, other.y - 22, '+20 HIT!', b.color);
+              AudioFX.hit();
+              state.bullets.splice(i, 1);
+              hitSomething = true;
+              break;
+            }
+          }
+          if (hitSomething) continue;
+
+          // Hit hazard mines
+          for (const h of state.hazards) {
+            if (Math.hypot(h.x - b.x, h.y - b.y) < h.radius + b.radius) {
+              const spd = Math.hypot(b.vx, b.vy) || 1;
+              h.vx = (b.vx / spd) * 140;
+              h.vy = (b.vy / spd) * 140;
+              spawnBurst(b.x, b.y, '#f87171', 7);
+              state.bullets.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        for (let i = state.floatTexts.length - 1; i >= 0; i--) {
+          const ft = state.floatTexts[i];
+          ft.life -= dt;
+          ft.y -= 36 * dt;
+          if (ft.life <= 0) state.floatTexts.splice(i, 1);
+        }
+
+        for (let i = state.rings.length - 1; i >= 0; i--) {
+          const r = state.rings[i];
+          r.r += 440 * dt;
+          r.alpha = Math.max(0, 1 - r.r / r.maxR);
+          if (r.r >= r.maxR) state.rings.splice(i, 1);
+        }
+
+        if (state.shake > 0) state.shake = Math.max(0, state.shake - 28 * dt);
+        broadcastTelemetryToRemotes();
+      }
+
+      function renderCanvas() {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.save();
+        if (state.shake > 0.2) {
+          ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+        }
+
+        // Deep Space Arcade Background
+        ctx.fillStyle = '#050811';
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        // Neon Grid
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.065)';
+        ctx.lineWidth = 1;
+        const gridSize = 48;
+        for (let x = 0; x < state.width; x += gridSize) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, state.height); ctx.stroke();
+        }
+        for (let y = 0; y < state.height; y += gridSize) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(state.width, y); ctx.stroke();
+        }
+
+        // Shockwave Rings
+        for (const r of state.rings) {
+          ctx.save();
+          ctx.globalAlpha = r.alpha * 0.85;
+          ctx.strokeStyle = r.color;
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Orbs & Stars
+        const t = performance.now() * 0.004;
+        for (const o of state.orbs) {
+          const pulse = Math.sin(t + o.phase) * 2;
+          ctx.save();
+          ctx.shadowBlur = o.isStar ? 20 : 12;
+          ctx.shadowColor = o.isStar ? '#facc15' : '#38bdf8';
+          ctx.fillStyle = o.isStar ? '#fde047' : '#7dd3fc';
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, o.radius + pulse * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Hazards
+        for (const h of state.hazards) {
+          const pulse = 1 + Math.sin(h.phase) * 0.12;
+          ctx.save();
+          ctx.translate(h.x, h.y);
+          ctx.scale(pulse, pulse);
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = '#ef4444';
+          ctx.fillStyle = '#991b1b';
+          ctx.strokeStyle = '#f87171';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fca5a5';
+          ctx.beginPath();
+          ctx.arc(0, 0, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Laser Bullets
+        for (const b of state.bullets) {
+          ctx.save();
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = b.color;
+          ctx.strokeStyle = b.color;
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          const tailX = b.x - b.vx * 0.025;
+          const tailY = b.y - b.vy * 0.025;
+          ctx.beginPath();
+          ctx.moveTo(tailX, tailY);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Particles
+        for (const pt of state.particles) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+          ctx.fillStyle = pt.color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Players
+        state.players.forEach((p) => {
+          for (let i = 0; i < p.trail.length; i++) {
+            const tr = p.trail[i];
+            ctx.save();
+            ctx.globalAlpha = (i / p.trail.length) * 0.28;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(tr.x, tr.y, p.radius * (0.4 + 0.5 * (i / p.trail.length)), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius + 5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * (p.energy / 100)));
+          ctx.stroke();
+
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = p.hitFlash > 0 ? '#ef4444' : p.color;
+          ctx.fillStyle = p.hitFlash > 0 ? '#fca5a5' : p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Aim Direction Turret / Nose Pointer
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(p.radius + 7, 0);
+          ctx.lineTo(p.radius - 2, -5);
+          ctx.lineTo(p.radius - 2, 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          if (state.screen === 'playing') {
+            ctx.shadowBlur = 0;
+            ctx.font = '800 11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(p.label, p.x, p.y - p.radius - 10);
+          }
+          ctx.restore();
+        });
+
+        // Floating Hit Texts
+        for (const ft of state.floatTexts) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
+          ctx.font = '900 13px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = ft.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      let lastHudRender = 0;
+      function renderHud() {
+        document.getElementById('hudTimer').textContent = state.endless ? '∞' : String(Math.ceil(state.timeLeft));
+        const sorted = Array.from(state.players.values()).sort((a, b) => b.score - a.score);
+        document.getElementById('hudPlayers').innerHTML = sorted.map((p) => {
+          return '<div class="hud-pill flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs">' +
+            '<span class="w-2.5 h-2.5 rounded-full" style="background:' + p.color + '"></span>' +
+            '<span class="font-bold text-slate-200">' + p.label + '</span>' +
+            '<span class="font-mono font-black text-white">' + p.score + '</span>' +
+          '</div>';
+        }).join('');
+
+        const humans = Array.from(state.players.values()).filter((p) => !p.isBot).length;
+        document.getElementById('hudControllerCount').textContent = String(humans);
+        document.getElementById('titleConnStatus').textContent =
+          humans + (humans === 1 ? ' Controller Ready · Serverless P2P' : ' Controllers Ready · Serverless P2P');
+      }
+
+      function showOverlay(kind) {
+        const overlay = document.getElementById('gameOverlay');
+        const sorted = Array.from(state.players.values()).sort((a, b) => b.score - a.score);
+        const primaryBtn = document.getElementById('overlayPrimaryBtn');
+
+        if (kind === 'gameover') {
+          const winner = sorted[0];
+          document.getElementById('overlayBadge').textContent = 'Match Complete';
+          document.getElementById('overlayTitle').textContent = winner ? (winner.label + ' Wins!') : 'Time Up!';
+          document.getElementById('overlayDesc').textContent = 'Final Arena Standings';
+          primaryBtn.textContent = 'Play Again';
+        } else {
+          document.getElementById('overlayBadge').textContent = 'Paused';
+          document.getElementById('overlayTitle').textContent = 'Game Paused';
+          document.getElementById('overlayDesc').textContent = 'Current Match Standings';
+          primaryBtn.textContent = 'Resume';
+        }
+
+        document.getElementById('overlayScores').innerHTML = sorted.map((p, idx) => {
+          return '<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">' +
+            '<div class="flex items-center gap-2">' +
+              '<span class="font-black text-slate-400">#' + (idx + 1) + '</span>' +
+              '<span class="w-2.5 h-2.5 rounded-full" style="background:' + p.color + '"></span>' +
+              '<span class="font-bold text-white">' + p.label + '</span>' +
+            '</div>' +
+            '<span class="font-mono font-black text-sky-400">' + p.score + '</span>' +
+          '</div>';
+        }).join('');
+
+        overlay.classList.remove('hidden');
+      }
+
+      function resizeCanvas() {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        state.width = window.innerWidth;
+        state.height = window.innerHeight;
+        canvas.width = Math.floor(state.width * dpr);
+        canvas.height = Math.floor(state.height * dpr);
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        renderCanvas();
+      }
+
+      function gameLoop(ts) {
+        if (!state.lastFrame) state.lastFrame = ts;
+        const dt = Math.min(0.05, (ts - state.lastFrame) / 1000);
+        state.lastFrame = ts;
+
+        if (state.screen !== 'pad') {
+          updateSimulation(dt);
+          renderCanvas();
+          if (state.screen === 'playing' && ts - lastHudRender > 150) {
+            renderHud();
+            lastHudRender = ts;
+          }
+        }
+        state.rafId = requestAnimationFrame(gameLoop);
+      }
+
+      // ============================================================
+      // 4. VIRTUAL CONTROLLER BINDINGS (Floating Overlay + Full Phone Pad)
+      // ============================================================
+      const padState = {
+        dragging: false,
+        pointerId: null,
+        x: 0,
+        y: 0,
+        boosting: false,
+        firing: false,
+        transport: 'local', // 'local' | 'webrtc' | 'broadcast'
+        remoteId: 'phone-' + Math.floor(100 + Math.random() * 900)
+      };
+
+      function sendPadInput(pulseNow) {
+        const payload = {
+          type: 'input',
+          id: padState.remoteId,
+          colorIdx: state.localColorIdx,
+          x: Number(padState.x.toFixed(3)),
+          y: Number(padState.y.toFixed(3)),
+          boost: padState.boosting,
+          fire: padState.firing,
+          pulse: Boolean(pulseNow)
+        };
+
+        document.getElementById('padTelemetry').textContent =
+          'X: ' + payload.x.toFixed(2) + ' · Y: ' + payload.y.toFixed(2);
+
+        if (state.screen === 'playing') {
+          const p1 = state.players.get('local-p1');
+          if (p1 && !state.paused && !state.gameOver) {
+            p1.inputX = payload.x;
+            p1.inputY = payload.y;
+            p1.boosting = payload.boost;
+            p1.firing = payload.fire;
+            if (payload.pulse) p1.pulseTrigger = true;
+          }
+        } else if (padState.transport === 'webrtc') {
+          if (padRtcChannel && padRtcChannel.readyState === 'open') {
+            try { padRtcChannel.send(JSON.stringify(payload)); } catch (_) {}
+          }
+        } else if (padState.transport === 'broadcast') {
+          if (bcChannel) {
+            try { bcChannel.postMessage(payload); } catch (_) {}
+          }
+        }
+      }
+
+      function bindJoystick(baseEl, knobEl) {
+        function moveStick(clientX, clientY) {
+          const rect = baseEl.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const maxDist = rect.width * 0.34;
+          let dx = clientX - cx;
+          let dy = clientY - cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist > maxDist) {
+            dx = (dx / dist) * maxDist;
+            dy = (dy / dist) * maxDist;
+          }
+          knobEl.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px)';
+          padState.x = dx / maxDist;
+          padState.y = dy / maxDist;
+          sendPadInput(false);
+        }
+
+        function releaseStick(e) {
+          if (!padState.dragging) return;
+          if (e && padState.pointerId !== null && e.pointerId !== padState.pointerId) return;
+          padState.dragging = false;
+          padState.pointerId = null;
+          padState.x = 0;
+          padState.y = 0;
+          knobEl.style.transform = 'translate(0px, 0px)';
+          sendPadInput(false);
+        }
+
+        baseEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock();
+          e.preventDefault();
+          padState.dragging = true;
+          padState.pointerId = e.pointerId;
+          try { baseEl.setPointerCapture(e.pointerId); } catch (_) {}
+          moveStick(e.clientX, e.clientY);
+        });
+        baseEl.addEventListener('pointermove', (e) => {
+          if (!padState.dragging || e.pointerId !== padState.pointerId) return;
+          e.preventDefault();
+          moveStick(e.clientX, e.clientY);
+        });
+        baseEl.addEventListener('pointerup', releaseStick);
+        baseEl.addEventListener('pointercancel', releaseStick);
+      }
+
+      function bindActionButtons(boostEl, pulseEl, fireEl) {
+        boostEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock();
+          e.preventDefault();
+          padState.boosting = true;
+          boostEl.classList.add('pressed');
+          vibratePhone(18);
+          AudioFX.boost();
+          sendPadInput(false);
+        });
+        const stopBoost = () => {
+          padState.boosting = false;
+          boostEl.classList.remove('pressed');
+          sendPadInput(false);
+        };
+        boostEl.addEventListener('pointerup', stopBoost);
+        boostEl.addEventListener('pointercancel', stopBoost);
+        boostEl.addEventListener('pointerleave', stopBoost);
+
+        pulseEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock();
+          e.preventDefault();
+          pulseEl.classList.add('pressed');
+          vibratePhone(35);
+          sendPadInput(true);
+        });
+        const stopPulse = () => pulseEl.classList.remove('pressed');
+        pulseEl.addEventListener('pointerup', stopPulse);
+        pulseEl.addEventListener('pointercancel', stopPulse);
+
+        fireEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock();
+          e.preventDefault();
+          padState.firing = true;
+          fireEl.classList.add('pressed');
+          vibratePhone(14);
+          sendPadInput(false);
+        });
+        const stopFire = () => {
+          padState.firing = false;
+          fireEl.classList.remove('pressed');
+          sendPadInput(false);
+        };
+        fireEl.addEventListener('pointerup', stopFire);
+        fireEl.addEventListener('pointercancel', stopFire);
+        fireEl.addEventListener('pointerleave', stopFire);
+      }
+
+      bindJoystick(document.getElementById('overlayJoyBase'), document.getElementById('overlayJoyKnob'));
+      bindActionButtons(document.getElementById('overlayBoostBtn'), document.getElementById('overlayPulseBtn'), document.getElementById('overlayFireBtn'));
+      bindJoystick(document.getElementById('fullJoyBase'), document.getElementById('fullJoyKnob'));
+      bindActionButtons(document.getElementById('fullBoostBtn'), document.getElementById('fullPulseBtn'), document.getElementById('fullFireBtn'));
+
+      // ============================================================
+      // 5. SERVERLESS CONNECTIONS (WebRTC DataChannel + BroadcastChannel)
+      // ============================================================
+      const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+      let pendingHostPC = null;
+      const hostRemotePeers = new Map();
+      let padRtcPC = null;
+      let padRtcChannel = null;
+      let bcChannel = null;
+
+      function applyRemoteInput(msg) {
+        if (!msg || msg.type !== 'input') return;
+        const pid = msg.id || 'remote-1';
+        let player = state.players.get(pid);
+        if (!player) {
+          const num = Array.from(state.players.values()).filter((p) => !p.isBot).length + 1;
+          player = createPlayer(pid, 'Phone P' + num, msg.colorIdx != null ? msg.colorIdx : state.players.size, false, msg.source || 'webrtc');
+          state.players.set(pid, player);
+          renderHud();
+          showToast(player.label + ' joined!');
+        }
+        if (state.screen !== 'playing' || state.paused || state.gameOver) return;
+        player.inputX = Math.max(-1, Math.min(1, Number(msg.x) || 0));
+        player.inputY = Math.max(-1, Math.min(1, Number(msg.y) || 0));
+        player.boosting = Boolean(msg.boost);
+        player.firing = Boolean(msg.fire);
+        if (msg.pulse) player.pulseTrigger = true;
+      }
+
+      let lastTelemetryPush = 0;
+      function broadcastTelemetryToRemotes() {
+        const now = performance.now();
+        if (now - lastTelemetryPush < 220) return;
+        lastTelemetryPush = now;
+
+        hostRemotePeers.forEach((peer, pid) => {
+          const p = state.players.get(pid);
+          if (p && peer.dc && peer.dc.readyState === 'open') {
+            try { peer.dc.send(JSON.stringify({ type: 'telemetry', score: p.score, energy: Math.round(p.energy), label: p.label })); } catch (_) {}
+          }
+        });
+
+        if (bcChannel) {
+          state.players.forEach((p) => {
+            if (p.source === 'broadcast') {
+              try { bcChannel.postMessage({ type: 'telemetry', id: p.id, score: p.score, energy: Math.round(p.energy), label: p.label }); } catch (_) {}
+            }
+          });
+        }
+      }
+
+      function waitForIceGathering(pc, timeoutMs) {
+        return new Promise((resolve) => {
+          if (pc.iceGatheringState === 'complete') { resolve(); return; }
+          const timer = setTimeout(resolve, timeoutMs || 2200);
+          pc.addEventListener('icegatheringstatechange', () => {
+            if (pc.iceGatheringState === 'complete') { clearTimeout(timer); resolve(); }
+          });
+        });
+      }
+
+      function encodeSignal(desc) {
+        return btoa(unescape(encodeURIComponent(JSON.stringify({ type: desc.type, sdp: desc.sdp }))));
+      }
+      function decodeSignal(code) {
+        return JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+      }
+
+      document.getElementById('hostCreateOfferBtn').addEventListener('click', async () => {
+        AudioFX.unlock();
+        const statusEl = document.getElementById('hostOfferStatus');
+        const outEl = document.getElementById('hostOfferOutput');
+        if (typeof RTCPeerConnection === 'undefined') { statusEl.textContent = 'WebRTC unsupported in this browser.'; return; }
+        statusEl.textContent = 'Gathering P2P candidates...';
+        outEl.value = '';
+        try {
+          if (pendingHostPC) { try { pendingHostPC.close(); } catch (_) {} }
+          const pc = new RTCPeerConnection(ICE_CONFIG);
+          const pid = 'rtc-' + Math.floor(1000 + Math.random() * 9000);
+          const dc = pc.createDataChannel('airpad', { ordered: false, maxRetransmits: 0 });
+          dc.onopen = () => {
+            hostRemotePeers.set(pid, { pc, dc });
+            statusEl.textContent = 'Phone connected directly via WebRTC!';
+            showToast('Phone controller connected!');
+            closePairModal();
+          };
+          dc.onmessage = (ev) => {
+            try { const d = JSON.parse(ev.data); d.id = pid; d.source = 'webrtc'; applyRemoteInput(d); } catch (_) {}
+          };
+          dc.onclose = () => {
+            hostRemotePeers.delete(pid);
+            state.players.delete(pid);
+            renderHud();
+            showToast('Phone controller disconnected.');
+          };
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await waitForIceGathering(pc, 2200);
+          pendingHostPC = pc;
+          outEl.value = encodeSignal(pc.localDescription);
+          statusEl.textContent = 'Offer ready! Copy and paste into Phone Pad.';
+        } catch (err) {
+          statusEl.textContent = 'Error: ' + (err.message || err);
+        }
+      });
+
+      document.getElementById('hostCopyOfferBtn').addEventListener('click', () => {
+        copyText(document.getElementById('hostOfferOutput').value, 'Offer code copied!');
+      });
+
+      document.getElementById('hostAcceptAnswerBtn').addEventListener('click', async () => {
+        const statusEl = document.getElementById('hostOfferStatus');
+        const raw = document.getElementById('hostAnswerInput').value;
+        if (!pendingHostPC) { showToast('Generate an Offer Code first.'); return; }
+        if (!raw.trim()) { showToast('Paste the Phone Reply Code first.'); return; }
+        try {
+          await pendingHostPC.setRemoteDescription(new RTCSessionDescription(decodeSignal(raw)));
+          statusEl.textContent = 'Linking with phone over P2P...';
+          showToast('Linking phone...');
+        } catch (_) {
+          statusEl.textContent = 'Invalid Reply Code.';
+          showToast('Invalid Reply Code.');
+        }
+      });
+
+      document.getElementById('padCreateAnswerBtn').addEventListener('click', async () => {
+        AudioFX.unlock();
+        const statusEl = document.getElementById('padRtcStatus');
+        const raw = document.getElementById('padOfferInput').value;
+        const outEl = document.getElementById('padAnswerOutput');
+        if (!raw.trim()) { showToast('Paste the TV Offer Code first.'); return; }
+        statusEl.textContent = 'Generating Reply Code...';
+        outEl.value = '';
+        try {
+          if (padRtcPC) { try { padRtcPC.close(); } catch (_) {} }
+          const pc = new RTCPeerConnection(ICE_CONFIG);
+          pc.ondatachannel = (ev) => {
+            padRtcChannel = ev.channel;
+            padRtcChannel.onopen = () => {
+              padState.transport = 'webrtc';
+              updatePadConnectionUI('WebRTC P2P', 'emerald');
+              showToast('Connected to TV Screen!');
+              closePairModal();
+              setScreen('pad');
+            };
+            padRtcChannel.onmessage = (msgEv) => {
+              try {
+                const d = JSON.parse(msgEv.data);
+                if (d.type === 'telemetry') {
+                  document.getElementById('padScoreText').textContent = String(d.score);
+                  document.getElementById('padEnergyText').textContent = d.energy + '%';
+                  if (d.label) document.getElementById('padPlayerLabel').textContent = d.label;
+                }
+              } catch (_) {}
+            };
+            padRtcChannel.onclose = () => {
+              padState.transport = 'local';
+              updatePadConnectionUI('Disconnected', 'sky');
+              showToast('Disconnected from TV.');
+            };
+          };
+          await pc.setRemoteDescription(new RTCSessionDescription(decodeSignal(raw)));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await waitForIceGathering(pc, 2200);
+          padRtcPC = pc;
+          outEl.value = encodeSignal(pc.localDescription);
+          statusEl.textContent = 'Reply ready! Copy and paste it back into the TV.';
+        } catch (_) {
+          statusEl.textContent = 'Invalid Offer Code.';
+          showToast('Invalid Offer Code.');
+        }
+      });
+
+      document.getElementById('padCopyAnswerBtn').addEventListener('click', () => {
+        copyText(document.getElementById('padAnswerOutput').value, 'Reply code copied!');
+      });
+
+      function initBroadcastChannel() {
+        try {
+          if (typeof BroadcastChannel === 'undefined') return;
+          bcChannel = new BroadcastChannel('airpad_serverless_v1');
+          bcChannel.onmessage = (ev) => {
+            const msg = ev.data;
+            if (!msg) return;
+            if (msg.type === 'input' && state.screen !== 'pad') {
+              msg.source = 'broadcast';
+              applyRemoteInput(msg);
+            } else if (msg.type === 'telemetry' && padState.transport === 'broadcast' && msg.id === padState.remoteId) {
+              document.getElementById('padScoreText').textContent = String(msg.score);
+              document.getElementById('padEnergyText').textContent = msg.energy + '%';
+              if (msg.label) document.getElementById('padPlayerLabel').textContent = msg.label;
+            }
+          };
+        } catch (_) {}
+      }
+
+      document.getElementById('connectBroadcastBtn').addEventListener('click', () => {
+        if (!bcChannel) { showToast('BroadcastChannel not supported.'); return; }
+        padState.transport = 'broadcast';
+        updatePadConnectionUI('Tab Link', 'indigo');
+        showToast('Linked via BroadcastChannel!');
+        closePairModal();
+        setScreen('pad');
+      });
+
+      function updatePadConnectionUI(label, color) {
+        const pill = document.getElementById('padConnPill');
+        document.getElementById('padTransportLabel').textContent = label;
+        pill.textContent = label;
+        pill.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold ' +
+          (color === 'emerald' ? 'bg-emerald-500/20 text-emerald-300' :
+           color === 'indigo' ? 'bg-indigo-500/20 text-indigo-300' :
+           'bg-sky-500/20 text-sky-300');
+      }
+
+      // ============================================================
+      // 6. UI EVENTS, COLOR PICKER, MODALS & KEYBOARD
+      // ============================================================
+      function cyclePlayerColor() {
+        state.localColorIdx = (state.localColorIdx + 1) % PLAYER_PALETTE.length;
+        const pal = PLAYER_PALETTE[state.localColorIdx];
+        [document.getElementById('menuColorDot'), document.getElementById('padColorDot')].forEach((dot) => {
+          if (dot) {
+            dot.style.backgroundColor = pal.hex;
+            dot.style.boxShadow = '0 0 10px ' + pal.hex;
+          }
+        });
+        const p1 = state.players.get('local-p1');
+        if (p1) {
+          p1.colorIdx = state.localColorIdx;
+          p1.color = pal.hex;
+          p1.glow = pal.glow;
+        }
+        renderHud();
+      }
+
+      function toggleSound() {
+        AudioFX.unlock();
+        AudioFX.muted = !AudioFX.muted;
+        const icon = AudioFX.muted ? '🔇' : '🔊';
+        document.getElementById('soundIcon').textContent = icon;
+        document.getElementById('titleSoundIcon').textContent = icon;
+        showToast(AudioFX.muted ? 'Sound muted' : 'Sound on');
+      }
+
+      function syncMenuSettingsUI() {
+        const m60 = document.getElementById('menuMode60Btn');
+        const mEnd = document.getElementById('menuModeEndlessBtn');
+        m60.className = 'px-2.5 py-1.5 rounded-lg font-extrabold transition ' + (!state.endless ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
+        mEnd.className = 'px-2.5 py-1.5 rounded-lg font-extrabold transition ' + (state.endless ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
+        document.getElementById('menuBotCountLabel').textContent = String(state.menuBotCount);
+      }
+
+      function setPairTab(tab) {
+        const map = {
+          host: [document.getElementById('tabWebRTCHost'), document.getElementById('paneWebRTCHost')],
+          pad: [document.getElementById('tabWebRTCPad'), document.getElementById('paneWebRTCPad')],
+          bc: [document.getElementById('tabBroadcast'), document.getElementById('paneBroadcast')]
+        };
+        Object.entries(map).forEach(([k, [btn, pane]]) => {
+          btn.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition ' + (k === tab ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
+          pane.classList.toggle('hidden', k !== tab);
+        });
+      }
+
+      function openPairModal(defaultTab) {
+        setPairTab(defaultTab || (state.screen === 'pad' ? 'pad' : 'host'));
+        document.getElementById('pairModal').classList.remove('hidden');
+      }
+      function closePairModal() {
+        document.getElementById('pairModal').classList.add('hidden');
+      }
+
+      // Title screen actions
+      document.getElementById('playNowBtn').addEventListener('click', () => startMatch(true));
+      document.getElementById('startHostBtn').addEventListener('click', () => startMatch(false));
+      document.getElementById('joinPhoneBtn').addEventListener('click', () => {
+        AudioFX.unlock();
+        setScreen('pad');
+      });
+      document.getElementById('titlePairBtn').addEventListener('click', () => openPairModal('host'));
+      document.getElementById('titleSoundBtn').addEventListener('click', toggleSound);
+      document.getElementById('titleGuideBtn').addEventListener('click', () => document.getElementById('guideModal').classList.remove('hidden'));
+      document.getElementById('menuMode60Btn').addEventListener('click', () => { state.endless = false; syncMenuSettingsUI(); });
+      document.getElementById('menuModeEndlessBtn').addEventListener('click', () => { state.endless = true; syncMenuSettingsUI(); });
+      document.getElementById('menuBotDecBtn').addEventListener('click', () => { state.menuBotCount = Math.max(0, state.menuBotCount - 1); syncMenuSettingsUI(); });
+      document.getElementById('menuBotIncBtn').addEventListener('click', () => { state.menuBotCount = Math.min(4, state.menuBotCount + 1); syncMenuSettingsUI(); });
+      document.getElementById('menuColorBtn').addEventListener('click', cyclePlayerColor);
+
+      // In-game floating HUD actions
+      document.getElementById('hudTogglePadBtn').addEventListener('click', () => {
+        state.showTouchOverlay = !state.showTouchOverlay;
+        document.getElementById('touchOverlay').classList.toggle('hidden', !state.showTouchOverlay);
+        showToast(state.showTouchOverlay ? 'On-screen controller shown' : 'On-screen controller hidden');
+      });
+      document.getElementById('hudPairBtn').addEventListener('click', () => openPairModal('host'));
+      document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);
+      document.getElementById('hudPauseBtn').addEventListener('click', () => {
+        if (state.gameOver) return;
+        state.paused = !state.paused;
+        if (state.paused) showOverlay('pause');
+        else document.getElementById('gameOverlay').classList.add('hidden');
+      });
+
+      // Overlay actions
+      document.getElementById('overlayPrimaryBtn').addEventListener('click', () => {
+        AudioFX.unlock();
+        if (state.gameOver) {
+          startMatch(state.showTouchOverlay);
+        } else {
+          state.paused = false;
+          document.getElementById('gameOverlay').classList.add('hidden');
+        }
+      });
+      document.getElementById('overlayRestartBtn').addEventListener('click', () => startMatch(state.showTouchOverlay));
+      document.getElementById('overlayMenuBtn').addEventListener('click', () => setScreen('title'));
+
+      // Phone pad screen actions
+      document.getElementById('padBackToTitleBtn').addEventListener('click', () => setScreen('title'));
+      document.getElementById('padSwitchColorBtn').addEventListener('click', cyclePlayerColor);
+      document.getElementById('padOpenPairBtn').addEventListener('click', () => openPairModal('pad'));
+
+      // Pairing & Guide modals
+      document.getElementById('closePairModalBtn').addEventListener('click', closePairModal);
+      document.getElementById('tabWebRTCHost').addEventListener('click', () => setPairTab('host'));
+      document.getElementById('tabWebRTCPad').addEventListener('click', () => setPairTab('pad'));
+      document.getElementById('tabBroadcast').addEventListener('click', () => setPairTab('bc'));
+      document.getElementById('closeGuideModalBtn').addEventListener('click', () => document.getElementById('guideModal').classList.add('hidden'));
+      document.getElementById('closeGuideBottomBtn').addEventListener('click', () => document.getElementById('guideModal').classList.add('hidden'));
+
+      // Keyboard controls
+      window.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+        AudioFX.unlock();
+        const k = e.key.toLowerCase();
+        if (k === 'escape' && state.screen === 'playing' && !state.gameOver) {
+          state.paused = !state.paused;
+          if (state.paused) showOverlay('pause');
+          else document.getElementById('gameOverlay').classList.add('hidden');
+          return;
+        }
+        if (k === 'w' || k === 'arrowup') { state.keys.up = true; e.preventDefault(); }
+        if (k === 's' || k === 'arrowdown') { state.keys.down = true; e.preventDefault(); }
+        if (k === 'a' || k === 'arrowleft') { state.keys.left = true; e.preventDefault(); }
+        if (k === 'd' || k === 'arrowright') { state.keys.right = true; e.preventDefault(); }
+        if (k === ' ') { state.keys.boost = true; e.preventDefault(); }
+        if (k === 'shift' || k === 'e') { state.keys.pulse = true; }
+        if (k === 'f' || k === 'j' || k === 'enter') { state.keys.fire = true; }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 'w' || k === 'arrowup') state.keys.up = false;
+        if (k === 's' || k === 'arrowdown') state.keys.down = false;
+        if (k === 'a' || k === 'arrowleft') state.keys.left = false;
+        if (k === 'd' || k === 'arrowright') state.keys.right = false;
+        if (k === ' ') state.keys.boost = false;
+        if (k === 'f' || k === 'j' || k === 'enter') state.keys.fire = false;
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+
+      window.onload = function () {
+        initBroadcastChannel();
+        resizeCanvas();
+        initGame();
+        syncMenuSettingsUI();
+        setScreen('title');
+        if (state.rafId) cancelAnimationFrame(state.rafId);
+        state.rafId = requestAnimationFrame(gameLoop);
+      };
+    })();
+  </script>
+</body>
+</html>
