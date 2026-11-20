@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>AirPad: Neon Arena</title>
+  <title>Neon Arena — Wireless Party Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -33,10 +33,10 @@
       -webkit-user-select: none;
     }
     .game-title-glow {
-      text-shadow: 0 0 28px rgba(56, 189, 248, 0.55), 0 0 64px rgba(192, 38, 211, 0.35);
+      text-shadow: 0 0 30px rgba(56, 189, 248, 0.55), 0 0 64px rgba(192, 38, 211, 0.35);
     }
     .arcade-btn {
-      transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.12s ease;
+      transition: transform 0.1s ease, filter 0.12s ease, box-shadow 0.15s ease;
     }
     .arcade-btn:hover {
       transform: translateY(-1px);
@@ -46,13 +46,18 @@
       transform: scale(0.96);
     }
     .hud-pill {
-      background: rgba(7, 12, 24, 0.68);
-      backdrop-filter: blur(10px);
+      background: rgba(7, 12, 24, 0.72);
+      backdrop-filter: blur(12px);
       border: 1px solid rgba(148, 163, 184, 0.18);
     }
+    .glass-panel {
+      background: rgba(9, 14, 28, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
     .joy-base {
-      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0.78) 70%, rgba(56, 189, 248, 0.22) 100%);
-      box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(125, 211, 252, 0.28);
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.58) 0%, rgba(15, 23, 42, 0.82) 70%, rgba(56, 189, 248, 0.22) 100%);
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.68), 0 0 0 2px rgba(125, 211, 252, 0.28);
     }
     .joy-knob {
       background: radial-gradient(circle at 35% 30%, #bae6fd 0%, #0284c7 65%, #0369a1 100%);
@@ -65,11 +70,6 @@
     .btn-pad.pressed, .btn-pad:active {
       transform: scale(0.91);
       filter: brightness(1.22);
-    }
-    .glass-modal {
-      background: rgba(9, 14, 28, 0.92);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(148, 163, 184, 0.22);
     }
     canvas {
       display: block;
@@ -93,235 +93,349 @@
     <canvas id="gameCanvas"></canvas>
   </div>
 
-  <!-- FLOATING IN-GAME ARCADE HUD (Hidden on Title Screen & Full Phone Pad Mode) -->
-  <div id="inGameHud" class="hidden fixed inset-x-0 top-0 z-20 p-3 sm:p-4 flex items-start justify-between gap-2 pointer-events-none">
-    <!-- Top-Left: Player Scores -->
-    <div id="hudPlayers" class="flex items-center gap-1.5 sm:gap-2 flex-wrap pointer-events-auto max-w-[44%]"></div>
+  <!-- ========================================================= -->
+  <!-- 1. FULL-SCREEN MAIN TITLE SCREEN (Clean Game-Only Menu)   -->
+  <!-- ========================================================= -->
+  <div id="titleScreen" class="fixed inset-0 z-30 flex flex-col items-center justify-between p-5 sm:p-8 bg-gradient-to-b from-slate-950/60 via-slate-950/45 to-slate-950/82 backdrop-blur-[3px]">
+    <!-- Top Right Floating Sound & Fullscreen Buttons -->
+    <div class="w-full max-w-5xl flex items-center justify-end gap-2">
+      <button id="titleFullscreenBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-200 hover:border-sky-400/60 transition" title="Toggle Fullscreen">
+        <span data-fs-icon>⛶</span>
+      </button>
+      <button id="titleSoundBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle Sound">
+        <span id="titleSoundIcon">🔊</span>
+      </button>
+    </div>
 
-    <!-- Top-Center: Arcade Timer -->
+    <!-- Center Arcade Logo & 3 Clean Game Actions -->
+    <div class="flex flex-col items-center text-center w-full max-w-sm space-y-6 my-auto">
+      <div class="space-y-2">
+        <div class="text-[11px] font-black uppercase tracking-[0.34em] text-sky-400/90">
+          Multiplayer Arcade Shooter
+        </div>
+        <h1 class="game-title-glow text-5xl sm:text-6xl font-black tracking-tight text-white leading-none">
+          NEON <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-fuchsia-400">ARENA</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300/90 font-medium">
+          Create a room on screen · Join with your phone
+        </p>
+      </div>
+
+      <div class="w-full space-y-3">
+        <button id="btnCreateRoom" type="button" class="arcade-btn w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 text-slate-950 font-black text-base sm:text-lg tracking-wide shadow-[0_0_32px_rgba(56,189,248,0.45)] flex items-center justify-center gap-2.5">
+          <span>＋</span>
+          <span>CREATE ROOM</span>
+        </button>
+
+        <button id="btnJoinRoom" type="button" class="arcade-btn w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-black text-base tracking-wide shadow-[0_0_26px_rgba(192,38,211,0.35)] flex items-center justify-center gap-2.5">
+          <span>📱</span>
+          <span>JOIN ROOM</span>
+        </button>
+
+        <button id="btnSoloPlay" type="button" class="arcade-btn hud-pill w-full py-3 px-6 rounded-2xl text-sm font-extrabold text-slate-100 hover:border-sky-400/60 flex items-center justify-center gap-2">
+          <span>▶</span>
+          <span>SOLO PLAY</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="text-[11px] font-semibold text-slate-400/80 tracking-wide text-center">
+      Shoot rivals · Grab power-ups · Survive the arena
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. HOST ROOM LOBBY SCREEN (QR + 4-Digit Code + Settings)  -->
+  <!-- ========================================================= -->
+  <div id="lobbyScreen" class="hidden fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-md overflow-y-auto scrollbar-thin">
+    <div class="glass-panel rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl space-y-5 my-auto">
+      <!-- Lobby Header -->
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button id="lobbyBackBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200 hover:border-sky-400/60">
+            ◀
+          </button>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-white leading-tight">Room Lobby</h2>
+            <p id="lobbyPeerStatus" class="text-xs text-emerald-300 font-semibold">Scan QR or enter the 4-digit code on your phone to join</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="lobbyFullscreenBtn" type="button" class="hud-pill px-3 py-1.5 rounded-xl text-xs font-extrabold text-sky-300 border-sky-500/35 hover:border-sky-400 transition flex items-center gap-1.5" title="Go Fullscreen on Laptop/TV">
+            <span data-fs-icon>⛶</span>
+            <span data-fs-label>Fullscreen</span>
+          </button>
+          <button id="lobbyRegenBtn" type="button" class="hud-pill px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition" title="Generate new room code">
+            ↻ New Code
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Lobby Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <!-- Left: QR Code & 4-Digit Code Card -->
+        <div class="md:col-span-5 p-4 rounded-2xl bg-slate-900/85 border border-slate-800 flex flex-col items-center justify-center text-center space-y-3">
+          <div id="lobbyQrBox" class="w-44 h-44 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-xl"></div>
+          <div class="space-y-0.5">
+            <div class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-slate-400">Room Code</div>
+            <div id="lobbyRoomCode" class="text-4xl font-black font-mono tracking-[0.28em] text-sky-400">----</div>
+          </div>
+          <button id="lobbyCopyLinkBtn" type="button" class="w-full py-2 px-3 rounded-xl text-xs font-extrabold bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 transition">
+            Copy Join Link
+          </button>
+        </div>
+
+        <!-- Right: Players List + Host Room Settings -->
+        <div class="md:col-span-7 flex flex-col justify-between gap-4">
+          <!-- Connected Players -->
+          <div class="p-4 rounded-2xl bg-slate-900/85 border border-slate-800 space-y-2.5 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Connected Phone Players</span>
+              <span id="lobbyPlayerCountPill" class="px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300">0 Joined</span>
+            </div>
+            <div id="lobbyPlayersList" class="space-y-2 max-h-36 overflow-y-auto scrollbar-thin">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Host Room Settings -->
+          <div class="p-4 rounded-2xl bg-slate-900/85 border border-slate-800 space-y-3">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-sky-400 block">Room Settings</span>
+
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <!-- Match Time -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] font-bold text-slate-400 block">Match Time</span>
+                <div class="flex gap-1">
+                  <button id="setTime60" type="button" class="flex-1 py-1.5 rounded-lg font-extrabold bg-sky-500 text-slate-950 transition">60s</button>
+                  <button id="setTime120" type="button" class="flex-1 py-1.5 rounded-lg font-extrabold bg-slate-800 text-slate-300 hover:text-white transition">120s</button>
+                  <button id="setTimeInf" type="button" class="flex-1 py-1.5 rounded-lg font-extrabold bg-slate-800 text-slate-300 hover:text-white transition">∞</button>
+                </div>
+              </div>
+
+              <!-- AI Bots -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] font-bold text-slate-400 block">AI Bots</span>
+                <div class="flex items-center justify-between bg-slate-950/70 rounded-lg p-1 border border-slate-800">
+                  <button id="setBotDec" type="button" class="w-8 h-7 rounded-md bg-slate-800 hover:bg-slate-700 font-black text-white">−</button>
+                  <span id="setBotLabel" class="font-black text-white">1 Bot</span>
+                  <button id="setBotInc" type="button" class="w-8 h-7 rounded-md bg-slate-800 hover:bg-slate-700 font-black text-white">+</button>
+                </div>
+              </div>
+
+              <!-- Arena Obstacles -->
+              <button id="setWallsToggle" type="button" class="py-2 px-3 rounded-xl bg-slate-950/70 border border-sky-500/40 flex items-center justify-between font-bold text-slate-200 hover:border-sky-400 transition">
+                <span>Arena Walls</span>
+                <span id="setWallsStatus" class="text-sky-400 font-black">ON</span>
+              </button>
+
+              <!-- Power-Ups -->
+              <button id="setPowerupsToggle" type="button" class="py-2 px-3 rounded-xl bg-slate-950/70 border border-emerald-500/40 flex items-center justify-between font-bold text-slate-200 hover:border-emerald-400 transition">
+                <span>Power-Ups</span>
+                <span id="setPowerupsStatus" class="text-emerald-400 font-black">ON</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Match Footer -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+        <p id="lobbyStartHint" class="text-xs text-slate-400 font-medium">
+          Every player controls their orb from their phone. Connect at least 1 phone (or add AI bots) to start.
+        </p>
+        <button id="lobbyStartBtn" type="button" class="arcade-btn w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-sm sm:text-base tracking-wide shadow-[0_0_24px_rgba(52,211,153,0.4)]">
+          ▶ START MATCH
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 3. JOIN ROOM SCREEN (4-Digit Code + Name + Orb Color)     -->
+  <!-- ========================================================= -->
+  <div id="joinScreen" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto scrollbar-thin">
+    <div class="glass-panel rounded-3xl w-full max-w-sm p-6 shadow-2xl space-y-5 my-auto">
+      <div class="flex items-center gap-3">
+        <button id="joinBackBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200">
+          ◀
+        </button>
+        <div>
+          <h2 class="text-xl font-black text-white">Join Room</h2>
+          <p class="text-xs text-slate-400">Enter the 4-digit code shown on screen</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label for="joinCodeInput" class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">4-Digit Room Code</label>
+          <input id="joinCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="1234" class="w-full text-center text-3xl font-black font-mono tracking-[0.45em] py-3 px-3 rounded-2xl bg-slate-950 border-2 border-slate-700 focus:border-fuchsia-400 text-white focus:outline-none" />
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="joinNameInput" class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Your Player Name</label>
+          <input id="joinNameInput" type="text" maxlength="12" placeholder="Player" value="Player" class="w-full text-sm font-bold py-2.5 px-3.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-400 text-white focus:outline-none" />
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Orb Color</span>
+          <div id="joinColorSwatches" class="flex items-center justify-between gap-2"></div>
+        </div>
+
+        <button id="joinSubmitBtn" type="button" class="arcade-btn w-full py-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-black text-sm tracking-wide shadow-lg shadow-fuchsia-500/30">
+          JOIN GAME
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 4. FULL-SCREEN PHONE CONTROLLER SCREEN                    -->
+  <!-- ========================================================= -->
+  <div id="phonePadScreen" class="hidden fixed inset-0 z-30 bg-[#070b15] flex flex-col justify-between p-4 sm:p-6 touch-zone">
+    <!-- Top Bar: Back, Name/Color Customization, Room Status -->
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div class="flex items-center gap-2 min-w-0">
+        <button id="padBackBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200 shrink-0" title="Leave Room">
+          ◀
+        </button>
+        <div class="hud-pill px-2.5 py-1 rounded-xl flex items-center gap-2 min-w-0">
+          <span id="padColorDot" class="w-3.5 h-3.5 rounded-full bg-sky-400 shrink-0"></span>
+          <input id="padNameInput" type="text" maxlength="12" value="Player" class="bg-transparent text-xs font-extrabold text-white w-24 sm:w-28 focus:outline-none border-b border-transparent focus:border-sky-400" title="Edit your player name" />
+        </div>
+        <span id="padConnPill" class="px-2 py-1 rounded-lg text-[10px] font-black bg-emerald-500/20 text-emerald-300 shrink-0">Room ----</span>
+      </div>
+
+      <!-- Inline Orb Color Swatches + Fullscreen Toggle -->
+      <div class="flex items-center gap-2">
+        <div id="padColorSwatches" class="flex items-center gap-1.5"></div>
+        <button id="padFullscreenBtn" type="button" class="hud-pill px-2.5 h-8 rounded-xl text-[11px] font-extrabold text-sky-300 border-sky-500/40 hover:border-sky-400 transition flex items-center gap-1 shrink-0" title="Toggle Fullscreen Gamepad">
+          <span data-fs-icon>⛶</span>
+          <span class="hidden sm:inline" data-fs-label>Fullscreen</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Connected Fullscreen Prompt Banner on Phone -->
+    <div id="padFsBanner" class="hidden max-w-md w-full mx-auto px-3 py-2 rounded-2xl bg-sky-500/15 border border-sky-400/40 flex items-center justify-between gap-2">
+      <span class="text-[11px] font-bold text-sky-200">Connected! Go fullscreen for the best controller feel.</span>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="padFsBannerBtn" type="button" class="px-3 py-1 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-[11px] transition">
+          ⛶ Fullscreen
+        </button>
+        <button id="padFsBannerDismiss" type="button" class="w-6 h-6 rounded-lg bg-slate-800/90 text-slate-300 text-xs font-bold">✕</button>
+      </div>
+    </div>
+
+    <!-- Live Player Health & Energy Bars on Phone -->
+    <div class="max-w-md w-full mx-auto space-y-1.5 px-1">
+      <div class="flex items-center justify-between text-[11px] font-extrabold">
+        <span class="text-emerald-400">HP <span id="padHpText">100</span></span>
+        <span id="padPowerupBadge" class="text-amber-300 uppercase tracking-wider"></span>
+        <span class="text-sky-400">SCORE <span id="padScoreText">0</span></span>
+      </div>
+      <div class="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+        <div id="padHpBar" class="h-full bg-gradient-to-r from-emerald-400 to-lime-400 transition-all duration-150" style="width: 100%"></div>
+      </div>
+      <div class="w-full h-1.5 rounded-full bg-slate-900 overflow-hidden">
+        <div id="padEnergyBar" class="h-full bg-amber-400 transition-all duration-100" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <!-- Main Touch Gamepad Surface -->
+    <div class="flex-1 flex flex-col sm:flex-row items-center justify-around gap-6 py-2 touch-zone">
+      <!-- Virtual Thumbstick -->
+      <div class="flex flex-col items-center gap-2">
+        <div id="fullJoyBase" class="joy-base touch-zone relative w-44 h-44 sm:w-52 sm:h-52 rounded-full flex items-center justify-center">
+          <div class="pointer-events-none absolute inset-4 rounded-full border border-dashed border-sky-300/25"></div>
+          <div id="fullJoyKnob" class="joy-knob pointer-events-none w-18 h-18 w-[72px] h-[72px] rounded-full border-2 border-sky-200/60"></div>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Move &amp; Aim</span>
+      </div>
+
+      <!-- Tactile Action Buttons -->
+      <div class="flex items-center gap-3.5 sm:gap-5">
+        <button id="fullBoostBtn" type="button" class="btn-pad touch-zone w-22 h-22 w-[88px] h-[88px] sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-slate-950 font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_28px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
+          <span class="text-xl leading-none mb-0.5">⚡</span>
+          <span>BOOST</span>
+        </button>
+        <button id="fullPulseBtn" type="button" class="btn-pad touch-zone w-[88px] h-[88px] sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-fuchsia-400 to-purple-700 text-white font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_28px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
+          <span class="text-xl leading-none mb-0.5">💥</span>
+          <span>PULSE</span>
+        </button>
+        <button id="fullFireBtn" type="button" class="btn-pad touch-zone w-26 h-26 w-[104px] h-[104px] sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-rose-400 to-red-600 text-white font-black text-sm tracking-wider shadow-[0_10px_32px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
+          <span class="text-2xl leading-none mb-0.5">🎯</span>
+          <span>FIRE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 5. IN-GAME FLOATING ARCADE HUD & SOLO TOUCH OVERLAY       -->
+  <!-- ========================================================= -->
+  <div id="inGameHud" class="hidden fixed inset-x-0 top-0 z-20 p-3 sm:p-4 flex items-start justify-between gap-2 pointer-events-none">
+    <!-- Top-Left: Live Scoreboard Pills -->
+    <div id="hudPlayers" class="flex items-center gap-1.5 sm:gap-2 flex-wrap pointer-events-auto max-w-[46%]"></div>
+
+    <!-- Top-Center: Timer -->
     <div class="hud-pill px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg pointer-events-auto">
       <span id="hudTimer" class="text-base sm:text-xl font-black font-mono tracking-wider text-sky-400">60</span>
     </div>
 
-    <!-- Top-Right: Minimal Game Icon Controls -->
+    <!-- Top-Right: Minimal Game Icons -->
     <div class="flex items-center gap-1.5 pointer-events-auto">
-      <button id="hudTogglePadBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle on-screen touch controller">
+      <button id="hudRoomPill" type="button" class="hidden hud-pill px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-xs font-black text-emerald-300 hover:border-emerald-400/60 transition" title="Show Room QR & Code">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="hudRoomCode" class="font-mono tracking-widest">----</span>
+      </button>
+      <button id="hudTogglePadBtn" type="button" class="hidden hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle On-Screen Controls">
         🎮
       </button>
-      <button id="hudPairBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:border-emerald-400/60 transition" title="Room Code & QR Lobby">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="hidden sm:inline font-mono tracking-widest" id="hudRoomCode">----</span>
-        <span class="text-slate-500 hidden sm:inline">·</span>
-        <span id="hudControllerCount" class="font-mono">1</span>
+      <button id="hudFullscreenBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200 hover:border-sky-400/60 transition" title="Toggle Fullscreen">
+        <span data-fs-icon>⛶</span>
       </button>
       <button id="hudSoundBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Mute / Unmute">
         <span id="soundIcon">🔊</span>
       </button>
-      <button id="hudPauseBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white hover:border-sky-400/60 transition" title="Pause / Menu">
+      <button id="hudPauseBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white hover:border-sky-400/60 transition" title="Pause">
         ⏸
       </button>
     </div>
   </div>
 
-  <!-- FLOATING ON-SCREEN TOUCH CONTROLLER (In-Game Overlay for Touch / Split Play) -->
-  <div id="touchOverlay" class="hidden fixed inset-x-0 bottom-0 z-20 p-4 sm:p-6 flex items-end justify-between pointer-events-none touch-zone">
-    <!-- Bottom-Left: Floating Analog Thumbstick -->
-    <div id="overlayJoyBase" class="joy-base touch-zone pointer-events-auto relative w-32 h-32 sm:w-36 sm:h-36 rounded-full flex items-center justify-center opacity-85 hover:opacity-100 transition-opacity">
+  <!-- Floating Touch Controls (Only in Solo Play Mode) -->
+  <div id="soloTouchOverlay" class="hidden fixed inset-x-0 bottom-0 z-20 p-4 sm:p-6 flex items-end justify-between pointer-events-none touch-zone">
+    <div id="soloJoyBase" class="joy-base touch-zone pointer-events-auto relative w-32 h-32 sm:w-36 sm:h-36 rounded-full flex items-center justify-center opacity-85 hover:opacity-100 transition-opacity">
       <div class="pointer-events-none absolute inset-3 rounded-full border border-dashed border-sky-300/25"></div>
-      <div id="overlayJoyKnob" class="joy-knob pointer-events-none w-14 h-14 rounded-full border border-sky-200/60"></div>
+      <div id="soloJoyKnob" class="joy-knob pointer-events-none w-14 h-14 rounded-full border border-sky-200/60"></div>
     </div>
 
-    <!-- Bottom-Right: Floating Action Buttons -->
     <div class="flex items-end gap-2.5 sm:gap-3 pointer-events-auto">
-      <button id="overlayBoostBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-400/90 to-orange-600/90 text-slate-950 font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
+      <button id="soloBoostBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-400/90 to-orange-600/90 text-slate-950 font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
         <span class="text-sm sm:text-base leading-none">⚡</span>
         <span>BOOST</span>
       </button>
-      <button id="overlayPulseBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-fuchsia-400/90 to-purple-700/90 text-white font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
+      <button id="soloPulseBtn" type="button" class="btn-pad touch-zone w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-fuchsia-400/90 to-purple-700/90 text-white font-black text-[11px] sm:text-xs tracking-wide shadow-[0_6px_22px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
         <span class="text-sm sm:text-base leading-none">💥</span>
         <span>PULSE</span>
       </button>
-      <button id="overlayFireBtn" type="button" class="btn-pad touch-zone w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-400/95 to-red-600/95 text-white font-black text-xs tracking-wide shadow-[0_6px_26px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
+      <button id="soloFireBtn" type="button" class="btn-pad touch-zone w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-400/95 to-red-600/95 text-white font-black text-xs tracking-wide shadow-[0_6px_26px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
         <span class="text-base sm:text-lg leading-none">🎯</span>
         <span>FIRE</span>
       </button>
     </div>
   </div>
 
-  <!-- FULL-SCREEN GAME TITLE / START MENU SCREEN -->
-  <div id="titleScreen" class="fixed inset-0 z-30 flex flex-col items-center justify-between p-5 sm:p-8 bg-gradient-to-b from-slate-950/60 via-slate-950/45 to-slate-950/80 backdrop-blur-[3px]">
-    <!-- Top Floating Status & Utility Icons (Game Style, Not a Navbar) -->
-    <div class="w-full max-w-5xl flex items-center justify-between">
-      <div class="hud-pill px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold text-emerald-300">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="titleConnStatus">1 Controller Ready · Serverless P2P</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="titleSoundBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle Sound">
-          <span id="titleSoundIcon">🔊</span>
-        </button>
-        <button id="titleGuideBtn" type="button" class="hud-pill w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold text-sky-300 hover:border-sky-400/60 transition" title="How Serverless Mode Works">
-          ?
-        </button>
-      </div>
-    </div>
-
-    <!-- Center Arcade Logo & Game Menu -->
-    <div class="flex flex-col items-center text-center w-full max-w-md space-y-5 my-auto">
-      <div class="space-y-1.5">
-        <div class="text-[11px] font-black uppercase tracking-[0.32em] text-sky-400/90">
-          Wireless Arcade Arena
-        </div>
-        <h1 class="game-title-glow text-5xl sm:text-6xl font-black tracking-tight text-white leading-none">
-          NEON <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-fuchsia-400">ARENA</span>
-        </h1>
-        <p class="text-xs sm:text-sm text-slate-300/90 font-medium">
-          Control from your phone screen · Zero server required
-        </p>
-      </div>
-
-      <!-- Main Arcade Buttons -->
-      <div class="w-full space-y-2.5">
-        <button id="playNowBtn" type="button" class="arcade-btn w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 text-slate-950 font-black text-base sm:text-lg tracking-wide shadow-[0_0_32px_rgba(56,189,248,0.45)] flex items-center justify-center gap-2">
-          <span>▶</span>
-          <span>PLAY GAME</span>
-        </button>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <button id="startHostBtn" type="button" class="arcade-btn hud-pill py-3 px-3 rounded-2xl text-xs sm:text-sm font-extrabold text-white hover:border-sky-400/60 flex items-center justify-center gap-1.5">
-            <span>📺</span>
-            <span>TV HOST</span>
-          </button>
-          <button id="joinPhoneBtn" type="button" class="arcade-btn hud-pill py-3 px-3 rounded-2xl text-xs sm:text-sm font-extrabold text-fuchsia-300 hover:border-fuchsia-400/60 flex items-center justify-center gap-1.5">
-            <span>📱</span>
-            <span>PHONE PAD</span>
-          </button>
-        </div>
-
-        <button id="titlePairBtn" type="button" class="arcade-btn hud-pill w-full py-2.5 px-3.5 rounded-2xl text-left border-emerald-500/35 hover:border-emerald-400/70 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0">
-            <div id="titleQrMini" class="w-12 h-12 rounded-lg bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden"></div>
-            <div class="min-w-0">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Scan QR or Enter Code</div>
-              <div id="titleRoomCode" class="text-xl font-black font-mono tracking-[0.28em] text-white leading-tight">----</div>
-            </div>
-          </div>
-          <span class="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold shrink-0">
-            QR &amp; Join
-          </span>
-        </button>
-      </div>
-
-      <!-- Compact Match Settings Pills -->
-      <div class="hud-pill w-full rounded-2xl p-2.5 flex items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-1">
-          <button id="menuMode60Btn" type="button" class="px-2.5 py-1.5 rounded-lg font-extrabold bg-sky-500 text-slate-950 transition">60s</button>
-          <button id="menuModeEndlessBtn" type="button" class="px-2.5 py-1.5 rounded-lg font-extrabold text-slate-300 hover:text-white transition">Endless</button>
-        </div>
-
-        <div class="h-5 w-px bg-slate-700/80"></div>
-
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bots</span>
-          <button id="menuBotDecBtn" type="button" class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-white font-black transition">−</button>
-          <span id="menuBotCountLabel" class="w-4 text-center font-black text-white">1</span>
-          <button id="menuBotIncBtn" type="button" class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-white font-black transition">+</button>
-        </div>
-
-        <div class="h-5 w-px bg-slate-700/80"></div>
-
-        <button id="menuColorBtn" type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 transition" title="Change Player Color">
-          <span id="menuColorDot" class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
-          <span class="font-bold text-slate-200">Color</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Bottom Controls Hint -->
-    <div class="text-[11px] font-semibold text-slate-400/90 tracking-wide text-center">
-      WASD / Arrows · F / Enter Fire · Space Boost · Shift Pulse
-    </div>
-  </div>
-
-  <!-- FULL-SCREEN DEDICATED MOBILE GAMEPAD MODE (When opened on a phone) -->
-  <div id="phonePadScreen" class="hidden fixed inset-0 z-30 bg-[#070b15] flex flex-col justify-between p-4 sm:p-6 touch-zone">
-    <!-- Top Floating Controller Status -->
-    <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5">
-        <button id="padBackToTitleBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-slate-200 hover:border-sky-400/60" title="Back to Title Screen">
-          ◀
-        </button>
-        <div class="hud-pill px-3 py-1.5 rounded-xl flex items-center gap-2">
-          <span id="padColorDot" class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_10px_#38bdf8]"></span>
-          <span id="padPlayerLabel" class="text-xs font-extrabold text-white">Player 1</span>
-          <span id="padConnPill" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300">Not Paired</span>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-1.5">
-        <button id="padSwitchColorBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl text-xs font-bold text-slate-200">Color</button>
-        <button id="padOpenPairBtn" type="button" class="px-3 h-9 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25">
-          Connect TV
-        </button>
-      </div>
-    </div>
-
-    <!-- Center Gamepad Surface (Landscape & Portrait Friendly) -->
-    <div class="flex-1 flex flex-col sm:flex-row items-center justify-around gap-8 py-4 touch-zone">
-      <!-- Left: Large Virtual Thumbstick -->
-      <div class="flex flex-col items-center gap-2.5">
-        <div id="fullJoyBase" class="joy-base touch-zone relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center">
-          <div class="pointer-events-none absolute inset-5 rounded-full border border-dashed border-sky-300/25"></div>
-          <div class="pointer-events-none absolute top-3 text-xs font-bold text-slate-500">▲</div>
-          <div class="pointer-events-none absolute bottom-3 text-xs font-bold text-slate-500">▼</div>
-          <div class="pointer-events-none absolute left-3.5 text-xs font-bold text-slate-500">◀</div>
-          <div class="pointer-events-none absolute right-3.5 text-xs font-bold text-slate-500">▶</div>
-          <div id="fullJoyKnob" class="joy-knob pointer-events-none w-20 h-20 rounded-full border-2 border-sky-200/60"></div>
-        </div>
-        <span id="padTelemetry" class="text-[11px] font-mono text-slate-400">X: 0.00 · Y: 0.00</span>
-      </div>
-
-      <!-- Right: Tactile Arcade Action Buttons -->
-      <div class="flex items-center gap-3.5 sm:gap-5">
-        <button id="fullBoostBtn" type="button" class="btn-pad touch-zone w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-slate-950 font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_30px_rgba(245,158,11,0.4)] border-2 border-amber-200/70 flex flex-col items-center justify-center">
-          <span class="text-xl sm:text-2xl leading-none mb-1">⚡</span>
-          <span>BOOST</span>
-        </button>
-        <button id="fullPulseBtn" type="button" class="btn-pad touch-zone w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-fuchsia-400 to-purple-700 text-white font-black text-xs sm:text-sm tracking-wider shadow-[0_10px_30px_rgba(192,38,211,0.4)] border-2 border-fuchsia-200/60 flex flex-col items-center justify-center">
-          <span class="text-xl sm:text-2xl leading-none mb-1">💥</span>
-          <span>PULSE</span>
-        </button>
-        <button id="fullFireBtn" type="button" class="btn-pad touch-zone w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-rose-400 to-red-600 text-white font-black text-sm tracking-wider shadow-[0_10px_32px_rgba(244,63,94,0.5)] border-2 border-rose-200/75 flex flex-col items-center justify-center">
-          <span class="text-2xl leading-none mb-1">🎯</span>
-          <span>FIRE</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Quick 4-Digit Join Bar on Phone Pad -->
-    <div id="padQuickJoinBar" class="hud-pill rounded-2xl p-2 flex items-center gap-2 max-w-md w-full mx-auto">
-      <input id="padQuickCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="4-Digit Code" class="flex-1 min-w-0 text-center text-sm font-black font-mono tracking-[0.3em] py-2 px-3 rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-400 text-white focus:outline-none" />
-      <button id="padQuickJoinBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shrink-0 transition">
-        JOIN
-      </button>
-    </div>
-
-    <!-- Bottom Live Telemetry Strip -->
-    <div class="hud-pill rounded-2xl px-4 py-2.5 flex items-center justify-between text-xs font-bold">
-      <span class="text-slate-400">ENERGY <strong id="padEnergyText" class="text-amber-400 ml-1">100%</strong></span>
-      <span class="text-slate-400">SCORE <strong id="padScoreText" class="text-sky-400 ml-1">0</strong></span>
-      <span id="padTransportLabel" class="text-emerald-300">Standby</span>
-    </div>
-  </div>
-
-  <!-- IN-GAME PAUSE / GAME OVER OVERLAY -->
+  <!-- ========================================================= -->
+  <!-- 6. PAUSE / GAME OVER OVERLAY                              -->
+  <!-- ========================================================= -->
   <div id="gameOverlay" class="hidden fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-modal rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
       <div id="overlayBadge" class="inline-block px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-sky-500/20 text-sky-300">
         Paused
       </div>
       <h2 id="overlayTitle" class="text-3xl font-black text-white">Game Paused</h2>
-      <p id="overlayDesc" class="text-xs text-slate-300">Take a breather or jump back into the arena.</p>
       <div id="overlayScores" class="space-y-1.5 text-left"></div>
       <div class="space-y-2 pt-1">
         <button id="overlayPrimaryBtn" type="button" class="arcade-btn w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-sm shadow-lg shadow-sky-500/25">
@@ -329,175 +443,27 @@
         </button>
         <div class="grid grid-cols-2 gap-2">
           <button id="overlayRestartBtn" type="button" class="arcade-btn py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700">
-            Restart
+            Play Again
           </button>
-          <button id="overlayMenuBtn" type="button" class="arcade-btn py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
-            Title Screen
+          <button id="overlayExitBtn" type="button" class="arcade-btn py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
+            Main Menu
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ZERO-SERVER PAIRING LOBBY MODAL -->
-  <div id="pairModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-    <div class="glass-modal rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin p-5 sm:p-6 shadow-2xl">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 class="text-lg font-black text-white">Pair Phone Controller (No Server)</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Direct peer-to-peer HTML5 WebRTC DataChannel or same-browser BroadcastChannel.</p>
-        </div>
-        <button id="closePairModalBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
+  <!-- MID-GAME QUICK QR MODAL (When tapping Room Code pill in-game) -->
+  <div id="quickQrModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-300">Join This Room</span>
+        <button id="closeQuickQrBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
       </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 mb-4">
-        <button id="tabQrRoom" type="button" class="py-2 px-2 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">
-          QR &amp; Code
-        </button>
-        <button id="tabWebRTCHost" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-          Manual TV
-        </button>
-        <button id="tabWebRTCPad" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-          Manual Pad
-        </button>
-        <button id="tabBroadcast" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-          Same Browser
-        </button>
-      </div>
-
-      <!-- TAB 0: QR CODE & 4-DIGIT ROOM CODE -->
-      <div id="paneQrRoom" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <!-- TV Host QR + 4-Digit Code -->
-          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center space-y-3">
-            <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-400">Host Room (TV Screen)</span>
-            <div id="lobbyQrBox" class="w-40 h-40 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-lg"></div>
-            <div class="space-y-1">
-              <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">4-Digit Room Code</div>
-              <div id="lobbyRoomCode" class="text-3xl font-black font-mono tracking-[0.3em] text-white">----</div>
-            </div>
-            <div class="flex items-center gap-1.5 w-full">
-              <button id="copyRoomLinkBtn" type="button" class="flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 transition">
-                Copy Join Link
-              </button>
-              <button id="regenRoomCodeBtn" type="button" class="py-1.5 px-2.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" title="Generate New Code">
-                ↻
-              </button>
-            </div>
-            <div id="peerHostStatus" class="text-[11px] text-emerald-300 font-medium">Room ready for phones</div>
-          </div>
-
-          <!-- Phone Player 4-Digit Code Join -->
-          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-3">
-            <div class="space-y-2.5">
-              <span class="text-[11px] font-extrabold uppercase tracking-wider text-fuchsia-400 block">Join as Phone Player</span>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Scan the QR code with your phone camera, or type the <strong>4-digit code</strong> shown on the TV screen below.
-              </p>
-              <input id="joinCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="1234" class="w-full text-center text-2xl font-black font-mono tracking-[0.45em] py-3 px-3 rounded-xl bg-slate-950 border-2 border-slate-700 focus:border-fuchsia-400 text-white focus:outline-none" />
-              <button id="joinCodeSubmitBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-400 hover:to-purple-500 text-white shadow-lg shadow-fuchsia-500/25 transition">
-                JOIN WITH 4-DIGIT CODE
-              </button>
-            </div>
-            <div class="space-y-1.5 pt-2 border-t border-slate-800">
-              <div id="joinCodeStatus" class="text-[11px] text-slate-400">Works via PeerJS WebRTC P2P &amp; multi-tab BroadcastChannel.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 1: TV HOST WEBRTC -->
-      <div id="paneWebRTCHost" class="hidden space-y-3.5">
-        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-bold text-sky-400">Step 1 · Generate Offer Code on TV</span>
-            <button id="hostCreateOfferBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-sky-400 hover:bg-sky-300 text-slate-950 transition">
-              Generate Code
-            </button>
-          </div>
-          <textarea id="hostOfferOutput" readonly rows="3" placeholder="Click 'Generate Code' to create a serverless WebRTC offer..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-300 focus:outline-none focus:border-sky-500"></textarea>
-          <div class="flex items-center justify-between">
-            <span id="hostOfferStatus" class="text-[11px] text-slate-400">Ready to pair a new phone.</span>
-            <button id="hostCopyOfferBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
-              Copy Offer
-            </button>
-          </div>
-        </div>
-
-        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
-          <span class="text-xs font-bold text-emerald-400 block">Step 2 · Paste Reply Code from Phone</span>
-          <textarea id="hostAnswerInput" rows="3" placeholder="Paste the Phone's Reply Code here..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
-          <button id="hostAcceptAnswerBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
-            Connect Phone Controller
-          </button>
-        </div>
-      </div>
-
-      <!-- TAB 2: PHONE PAD WEBRTC -->
-      <div id="paneWebRTCPad" class="hidden space-y-3.5">
-        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
-          <span class="text-xs font-bold text-sky-400 block">Step 1 · Paste TV Offer Code</span>
-          <textarea id="padOfferInput" rows="3" placeholder="Paste the Offer Code copied from the TV screen..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
-          <button id="padCreateAnswerBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-sky-400 hover:bg-sky-300 text-slate-950 transition">
-            Generate Reply Code
-          </button>
-        </div>
-
-        <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-emerald-400">Step 2 · Send Reply Code back to TV</span>
-            <button id="padCopyAnswerBtn" type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
-              Copy Reply
-            </button>
-          </div>
-          <textarea id="padAnswerOutput" readonly rows="3" placeholder="Your Reply Code will appear here..." class="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-[11px] font-mono text-slate-300 focus:outline-none"></textarea>
-          <p id="padRtcStatus" class="text-[11px] text-slate-400">Once TV pastes this code, your phone links directly over P2P.</p>
-        </div>
-      </div>
-
-      <!-- TAB 3: BROADCAST CHANNEL -->
-      <div id="paneBroadcast" class="hidden space-y-3">
-        <div class="p-4 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Open this HTML file in <strong>two browser tabs</strong> on the same device: pick <strong>TV HOST</strong> in Tab 1 and <strong>PHONE PAD</strong> in Tab 2, then tap below to link instantly.
-          </p>
-          <button id="connectBroadcastBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-500 hover:bg-indigo-400 text-white transition">
-            Link Phone Pad via BroadcastChannel
-          </button>
-          <p id="broadcastStatus" class="text-[11px] text-slate-400 text-center">Native HTML5 BroadcastChannel API (0ms latency).</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- HOW IT WORKS MODAL -->
-  <div id="guideModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-    <div class="glass-modal rounded-3xl max-w-lg w-full max-h-[88vh] overflow-y-auto scrollbar-thin p-5 sm:p-6 shadow-2xl space-y-4">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-black text-white">Serverless HTML5 Game Architecture</h2>
-          <p class="text-xs text-slate-400 mt-0.5">How this game connects phones with zero backend server.</p>
-        </div>
-        <button id="closeGuideModalBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
-        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <h3 class="font-bold text-sky-400 mb-1">1. Peer-to-Peer WebRTC DataChannel</h3>
-          <p>Uses native <code class="text-sky-300">RTCPeerConnection</code> + unreliable <code class="text-sky-300">RTCDataChannel</code> (<code class="text-sky-300">ordered: false, maxRetransmits: 0</code>) for ultra-low-latency gamepad input directly between phone and TV.</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <h3 class="font-bold text-emerald-400 mb-1">2. Multi-Touch Pointer Events</h3>
-          <p>The virtual thumbstick and Boost/Pulse buttons use <code class="text-emerald-300">PointerEvents</code> with <code class="text-emerald-300">touch-action: none</code> and <code class="text-emerald-300">navigator.vibrate()</code> for smooth console-like phone controls.</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <h3 class="font-bold text-amber-400 mb-1">3. Static File Deployment</h3>
-          <p>Drop this single <code class="text-amber-300">.html</code> file on GitHub Pages or Netlify Drop. Opening the URL launches straight into this full-screen game with no website chrome.</p>
-        </div>
-      </div>
-
-      <button id="closeGuideBottomBtn" type="button" class="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-xs transition">
-        Back to Game
+      <div id="quickQrBox" class="w-44 h-44 mx-auto rounded-2xl bg-white p-2.5 flex items-center justify-center"></div>
+      <div id="quickQrCodeText" class="text-3xl font-black font-mono tracking-[0.3em] text-sky-400">----</div>
+      <button id="quickQrCopyBtn" type="button" class="w-full py-2 rounded-xl bg-sky-500/20 text-sky-300 font-bold text-xs border border-sky-500/30">
+        Copy Join Link
       </button>
     </div>
   </div>
@@ -522,9 +488,7 @@
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (Ctx) this.ctx = new Ctx();
           }
-          if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume().catch(() => {});
-          }
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         },
         beep(freq, duration, type, volume, slideTo) {
           if (this.muted || !this.ctx) return;
@@ -543,24 +507,30 @@
             osc.stop(now + duration);
           } catch (_) {}
         },
-        orb() { this.beep(660, 0.1, 'triangle', 0.11, 990); },
+        orb() { this.beep(660, 0.1, 'triangle', 0.1, 990); },
         star() {
-          this.beep(880, 0.14, 'sine', 0.14, 1320);
-          setTimeout(() => this.beep(1320, 0.18, 'triangle', 0.12, 1760), 70);
+          this.beep(880, 0.14, 'sine', 0.13, 1320);
+          setTimeout(() => this.beep(1320, 0.18, 'triangle', 0.11, 1760), 70);
         },
+        powerup() {
+          this.beep(520, 0.12, 'sine', 0.12, 1040);
+          setTimeout(() => this.beep(1040, 0.16, 'triangle', 0.12, 1560), 80);
+        },
+        shoot() { this.beep(920, 0.08, 'sawtooth', 0.08, 260); },
         pulse() { this.beep(220, 0.22, 'sawtooth', 0.12, 65); },
-        hit() { this.beep(150, 0.18, 'square', 0.1, 55); },
+        hit() { this.beep(160, 0.16, 'square', 0.1, 60); },
+        ko() {
+          this.beep(240, 0.24, 'sawtooth', 0.14, 50);
+          setTimeout(() => this.beep(120, 0.26, 'square', 0.12, 35), 90);
+        },
         boost() { this.beep(320, 0.08, 'sine', 0.05, 440); },
-        shoot() { this.beep(920, 0.09, 'sawtooth', 0.09, 260); },
         win() {
-          [523, 659, 784, 1046].forEach((f, i) => {
-            setTimeout(() => this.beep(f, 0.18, 'triangle', 0.12), i * 95);
-          });
+          [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.beep(f, 0.18, 'triangle', 0.12), i * 95));
         }
       };
 
       // ============================================================
-      // 2. TOAST & CLIPBOARD HELPERS
+      // 2. TOAST, CLIPBOARD & HAPTICS
       // ============================================================
       let toastTimer = null;
       function showToast(msg) {
@@ -576,7 +546,7 @@
       }
 
       function copyText(text, successMsg) {
-        if (!text) { showToast('Nothing to copy yet.'); return; }
+        if (!text) return;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(() => showToast(successMsg || 'Copied!')).catch(() => fallbackCopy(text, successMsg));
         } else {
@@ -591,7 +561,7 @@
         ta.style.opacity = '0';
         document.body.appendChild(ta);
         ta.select();
-        try { document.execCommand('copy'); showToast(successMsg || 'Copied!'); } catch (_) { showToast('Copy manually from the box.'); }
+        try { document.execCommand('copy'); showToast(successMsg || 'Copied!'); } catch (_) { showToast('Copy link manually.'); }
         document.body.removeChild(ta);
       }
 
@@ -600,57 +570,87 @@
       }
 
       // ============================================================
-      // 3. GAME STATE & ENGINE
+      // 3. COLOR PALETTE, POWERUPS & GAME STATE
       // ============================================================
       const PLAYER_PALETTE = [
-        { name: 'Cyan', hex: '#38bdf8', glow: 'rgba(56,189,248,0.55)' },
-        { name: 'Emerald', hex: '#34d399', glow: 'rgba(52,211,153,0.55)' },
-        { name: 'Amber', hex: '#fbbf24', glow: 'rgba(251,191,36,0.55)' },
-        { name: 'Rose', hex: '#fb7185', glow: 'rgba(251,113,133,0.55)' },
-        { name: 'Violet', hex: '#a78bfa', glow: 'rgba(167,139,250,0.55)' }
+        { name: 'Cyan', hex: '#38bdf8' },
+        { name: 'Emerald', hex: '#34d399' },
+        { name: 'Amber', hex: '#fbbf24' },
+        { name: 'Rose', hex: '#fb7185' },
+        { name: 'Violet', hex: '#a78bfa' },
+        { name: 'Lime', hex: '#a3e635' }
+      ];
+
+      const POWERUP_TYPES = [
+        { type: 'shield', label: 'SHIELD', icon: '🛡️', color: '#38bdf8' },
+        { type: 'rapid', label: 'RAPID FIRE', icon: '🔥', color: '#fb7185' },
+        { type: 'heal', label: '+40 HP', icon: '💚', color: '#34d399' },
+        { type: 'overdrive', label: 'OVERDRIVE', icon: '⚡', color: '#fbbf24' }
       ];
 
       const state = {
-        screen: 'title', // 'title' | 'playing' | 'pad'
-        showTouchOverlay: true,
+        screen: 'title', // 'title' | 'lobby' | 'join' | 'pad' | 'playing'
+        playMode: 'solo', // 'solo' | 'room'
+        showSoloTouch: true,
         paused: false,
         gameOver: false,
-        endless: false,
-        menuBotCount: 1,
+        settings: {
+          duration: 60, // 60 | 120 | 0 (endless)
+          botCount: 1,
+          walls: true,
+          powerups: true
+        },
         timeLeft: 60,
         lastFrame: 0,
         rafId: null,
         width: window.innerWidth,
         height: window.innerHeight,
         shake: 0,
-        players: new Map(),
+        players: new Map(), // active in-arena players
+        roomPhones: new Map(), // connected phone profiles: id -> { id, name, colorIdx, source, conn }
         orbs: [],
         hazards: [],
+        walls: [],
+        powerups: [],
         bullets: [],
         floatTexts: [],
         particles: [],
         rings: [],
-        botCount: 0,
-        localColorIdx: 0,
+        powerupTimer: 5,
         keys: { up: false, down: false, left: false, right: false, boost: false, pulse: false, fire: false }
       };
 
-      function createPlayer(id, label, colorIdx, isBot, source) {
+      const myPhoneProfile = {
+        id: 'p-' + Math.floor(1000 + Math.random() * 9000),
+        name: 'Player ' + Math.floor(1 + Math.random() * 9),
+        colorIdx: 0
+      };
+
+      function createPlayer(id, name, colorIdx, isBot, source) {
         const pal = PLAYER_PALETTE[colorIdx % PLAYER_PALETTE.length];
+        const spawn = findSafeSpawn();
         return {
           id,
-          label,
+          name: name || 'Player',
           colorIdx: colorIdx % PLAYER_PALETTE.length,
           color: pal.hex,
-          glow: pal.glow,
           isBot: Boolean(isBot),
           source: source || 'local',
-          x: 100 + Math.random() * Math.max(120, state.width - 200),
-          y: 100 + Math.random() * Math.max(120, state.height - 200),
+          x: spawn.x,
+          y: spawn.y,
           vx: 0,
           vy: 0,
           radius: 18,
+          hp: 100,
+          maxHp: 100,
+          alive: true,
+          respawnTimer: 0,
+          invulnTimer: 1.5,
+          shieldTimer: 0,
+          rapidTimer: 0,
+          overdriveTimer: 0,
           score: 0,
+          kos: 0,
           energy: 100,
           angle: Math.random() * Math.PI * 2,
           pulseCooldown: 0,
@@ -665,11 +665,42 @@
         };
       }
 
+      function pointInsideWall(x, y, pad) {
+        for (const w of state.walls) {
+          if (x > w.x - pad && x < w.x + w.w + pad && y > w.y - pad && y < w.y + w.h + pad) return true;
+        }
+        return false;
+      }
+
+      function findSafeSpawn() {
+        for (let tries = 0; tries < 25; tries++) {
+          const x = 80 + Math.random() * Math.max(120, state.width - 160);
+          const y = 90 + Math.random() * Math.max(120, state.height - 180);
+          if (!pointInsideWall(x, y, 36)) return { x, y };
+        }
+        return { x: state.width * 0.5, y: state.height * 0.5 };
+      }
+
+      function buildArenaWalls() {
+        state.walls = [];
+        if (!state.settings.walls) return;
+        const w = state.width;
+        const h = state.height;
+        const bw = Math.max(70, Math.min(130, w * 0.12));
+        const bh = 18;
+        const vw = 18;
+        const vh = Math.max(70, Math.min(120, h * 0.18));
+        // Four symmetric neon cover barriers
+        state.walls.push({ x: w * 0.24 - bw / 2, y: h * 0.30 - bh / 2, w: bw, h: bh });
+        state.walls.push({ x: w * 0.76 - bw / 2, y: h * 0.70 - bh / 2, w: bw, h: bh });
+        state.walls.push({ x: w * 0.76 - vw / 2, y: h * 0.30 - vh / 2, w: vw, h: vh });
+        state.walls.push({ x: w * 0.24 - vw / 2, y: h * 0.70 - vh / 2, w: vw, h: vh });
+      }
+
       function spawnOrb(isStar) {
-        const pad = 50;
+        const pt = findSafeSpawn();
         state.orbs.push({
-          x: pad + Math.random() * Math.max(60, state.width - pad * 2),
-          y: pad + Math.random() * Math.max(60, state.height - pad * 2),
+          x: pt.x, y: pt.y,
           radius: isStar ? 13 : 8,
           isStar: Boolean(isStar),
           phase: Math.random() * Math.PI * 2
@@ -677,15 +708,29 @@
       }
 
       function spawnHazard() {
-        const pad = 64;
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 42 + Math.random() * 48;
+        const pt = findSafeSpawn();
+        const a = Math.random() * Math.PI * 2;
+        const spd = 44 + Math.random() * 44;
         state.hazards.push({
-          x: pad + Math.random() * Math.max(60, state.width - pad * 2),
-          y: pad + Math.random() * Math.max(60, state.height - pad * 2),
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
+          x: pt.x, y: pt.y,
+          vx: Math.cos(a) * spd,
+          vy: Math.sin(a) * spd,
           radius: 15,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnPowerup() {
+        if (!state.settings.powerups || state.powerups.length >= 3) return;
+        const pt = findSafeSpawn();
+        const def = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+        state.powerups.push({
+          x: pt.x, y: pt.y,
+          radius: 16,
+          type: def.type,
+          label: def.label,
+          icon: def.icon,
+          color: def.color,
           phase: Math.random() * Math.PI * 2
         });
       }
@@ -693,69 +738,64 @@
       function spawnBurst(x, y, color, count) {
         for (let i = 0; i < count; i++) {
           const a = Math.random() * Math.PI * 2;
-          const spd = 45 + Math.random() * 200;
+          const spd = 45 + Math.random() * 210;
           state.particles.push({
             x, y,
             vx: Math.cos(a) * spd,
             vy: Math.sin(a) * spd,
-            life: 0.35 + Math.random() * 0.35,
-            maxLife: 0.7,
+            life: 0.32 + Math.random() * 0.36,
+            maxLife: 0.68,
             size: 2 + Math.random() * 3.5,
             color
           });
         }
       }
 
+      function spawnFloatText(x, y, text, color) {
+        state.floatTexts.push({ x, y, text, color, life: 0.85, maxLife: 0.85 });
+      }
+
       function resetArenaEntities() {
+        buildArenaWalls();
         state.orbs = [];
         state.hazards = [];
+        state.powerups = [];
         state.bullets = [];
         state.floatTexts = [];
         state.particles = [];
         state.rings = [];
+        state.powerupTimer = 4;
         for (let i = 0; i < 10; i++) spawnOrb(false);
         spawnOrb(true);
-        spawnOrb(true);
-        for (let i = 0; i < 5; i++) spawnHazard();
+        for (let i = 0; i < 4; i++) spawnHazard();
+        if (state.settings.powerups) spawnPowerup();
       }
 
-      function syncBotsToCount() {
-        Array.from(state.players.keys()).forEach((id) => {
-          const p = state.players.get(id);
-          if (p && p.isBot) state.players.delete(id);
-        });
-        state.botCount = 0;
-        for (let i = 0; i < state.menuBotCount; i++) {
-          state.botCount += 1;
-          const id = 'bot-' + state.botCount;
-          state.players.set(id, createPlayer(id, 'Bot ' + state.botCount, state.players.size, true, 'bot'));
-        }
-      }
-
-      function initGame() {
+      function initAttractScene() {
         state.players.clear();
-        const p1 = createPlayer('local-p1', 'P1', state.localColorIdx, false, 'local');
-        state.players.set(p1.id, p1);
-        syncBotsToCount();
+        state.settings.walls = true;
+        buildArenaWalls();
+        for (let i = 0; i < 3; i++) {
+          const id = 'demo-' + i;
+          state.players.set(id, createPlayer(id, 'Bot ' + (i + 1), i, true, 'bot'));
+        }
         resetArenaEntities();
-        renderHud();
       }
 
-      function setScreen(screen, withTouchOverlay) {
+      function setScreen(screen) {
         state.screen = screen;
-        if (typeof withTouchOverlay === 'boolean') state.showTouchOverlay = withTouchOverlay;
+        document.getElementById('titleScreen').classList.toggle('hidden', screen !== 'title');
+        document.getElementById('lobbyScreen').classList.toggle('hidden', screen !== 'lobby');
+        document.getElementById('joinScreen').classList.toggle('hidden', screen !== 'join');
+        document.getElementById('phonePadScreen').classList.toggle('hidden', screen !== 'pad');
+        document.getElementById('inGameHud').classList.toggle('hidden', screen !== 'playing');
 
-        const titleEl = document.getElementById('titleScreen');
-        const hudEl = document.getElementById('inGameHud');
-        const touchEl = document.getElementById('touchOverlay');
-        const padEl = document.getElementById('phonePadScreen');
+        const showSoloControls = screen === 'playing' && state.playMode === 'solo' && state.showSoloTouch;
+        document.getElementById('soloTouchOverlay').classList.toggle('hidden', !showSoloControls);
+        document.getElementById('hudTogglePadBtn').classList.toggle('hidden', !(screen === 'playing' && state.playMode === 'solo'));
+        document.getElementById('hudRoomPill').classList.toggle('hidden', !(screen === 'playing' && state.playMode === 'room'));
 
-        titleEl.classList.toggle('hidden', screen !== 'title');
-        hudEl.classList.toggle('hidden', screen !== 'playing');
-        padEl.classList.toggle('hidden', screen !== 'pad');
-        touchEl.classList.toggle('hidden', !(screen === 'playing' && state.showTouchOverlay));
-
-        if (screen === 'title') {
+        if (screen !== 'playing') {
           state.paused = false;
           state.gameOver = false;
           document.getElementById('gameOverlay').classList.add('hidden');
@@ -763,73 +803,159 @@
         renderHud();
       }
 
-      function startMatch(showTouchPad) {
+      function startSoloMatch() {
         AudioFX.unlock();
-        syncBotsToCount();
+        state.playMode = 'solo';
+        state.settings.duration = 60;
+        state.settings.walls = true;
+        state.settings.powerups = true;
         state.timeLeft = 60;
         state.paused = false;
         state.gameOver = false;
         state.shake = 0;
-        document.getElementById('gameOverlay').classList.add('hidden');
-        state.players.forEach((p) => {
-          p.score = 0;
-          p.energy = 100;
-          p.pulseCooldown = 0;
-          p.vx = 0;
-          p.vy = 0;
-          p.trail = [];
-          p.x = 90 + Math.random() * Math.max(120, state.width - 180);
-          p.y = 90 + Math.random() * Math.max(120, state.height - 180);
-        });
+        state.players.clear();
         resetArenaEntities();
-        setScreen('playing', showTouchPad);
+
+        const p1 = createPlayer('local-p1', myPhoneProfile.name || 'You', myPhoneProfile.colorIdx, false, 'local');
+        state.players.set(p1.id, p1);
+        for (let i = 1; i <= 2; i++) {
+          const id = 'bot-' + i;
+          state.players.set(id, createPlayer(id, 'Bot ' + i, (myPhoneProfile.colorIdx + i) % PLAYER_PALETTE.length, true, 'bot'));
+        }
+        setScreen('playing');
+      }
+
+      function startRoomMatch() {
+        AudioFX.unlock();
+        if (state.roomPhones.size === 0 && state.settings.botCount === 0) {
+          showToast('Connect at least 1 phone or add an AI bot to start.');
+          return;
+        }
+        state.playMode = 'room';
+        state.timeLeft = state.settings.duration > 0 ? state.settings.duration : 0;
+        state.paused = false;
+        state.gameOver = false;
+        state.shake = 0;
+        state.players.clear();
+        resetArenaEntities();
+
+        // Spawn ONLY connected phone players (everyone uses their phone!) + configured bots
+        state.roomPhones.forEach((profile, pid) => {
+          state.players.set(pid, createPlayer(pid, profile.name, profile.colorIdx, false, profile.source));
+        });
+        for (let i = 1; i <= state.settings.botCount; i++) {
+          const id = 'bot-' + i;
+          state.players.set(id, createPlayer(id, 'Bot ' + i, (state.players.size + i) % PLAYER_PALETTE.length, true, 'bot'));
+        }
+        setScreen('playing');
+      }
+
+      // ============================================================
+      // 4. COMBAT, HEALTH, WALLS, POWER-UPS & SIMULATION
+      // ============================================================
+      function resolveWallCircle(entity) {
+        for (const w of state.walls) {
+          const closestX = Math.max(w.x, Math.min(entity.x, w.x + w.w));
+          const closestY = Math.max(w.y, Math.min(entity.y, w.y + w.h));
+          const dx = entity.x - closestX;
+          const dy = entity.y - closestY;
+          const dist = Math.hypot(dx, dy);
+          if (dist < entity.radius) {
+            const nx = dist > 0.001 ? dx / dist : 0;
+            const ny = dist > 0.001 ? dy / dist : -1;
+            const overlap = entity.radius - dist;
+            entity.x += nx * overlap;
+            entity.y += ny * overlap;
+            const dot = entity.vx * nx + entity.vy * ny;
+            if (dot < 0) {
+              entity.vx -= 1.65 * dot * nx;
+              entity.vy -= 1.65 * dot * ny;
+            }
+          }
+        }
+      }
+
+      function damagePlayer(target, amount, attackerId, knockX, knockY) {
+        if (!target.alive || target.invulnTimer > 0) return;
+        target.vx += knockX;
+        target.vy += knockY;
+
+        if (target.shieldTimer > 0) {
+          target.shieldTimer = Math.max(0, target.shieldTimer - 2.2);
+          spawnBurst(target.x, target.y, '#38bdf8', 10);
+          spawnFloatText(target.x, target.y - 24, 'BLOCKED!', '#38bdf8');
+          AudioFX.orb();
+          return;
+        }
+
+        target.hp = Math.max(0, target.hp - amount);
+        target.hitFlash = 0.25;
+        state.shake = Math.min(12, state.shake + 4.5);
+        spawnBurst(target.x, target.y, '#fb7185', 12);
+        AudioFX.hit();
+
+        const shooter = attackerId ? state.players.get(attackerId) : null;
+        if (shooter) shooter.score += 10;
+
+        if (target.hp <= 0) {
+          target.alive = false;
+          target.respawnTimer = 2.5;
+          target.score = Math.max(0, target.score - 20);
+          spawnBurst(target.x, target.y, target.color, 28);
+          state.rings.push({ x: target.x, y: target.y, r: target.radius, maxR: 115, color: target.color, alpha: 1 });
+          AudioFX.ko();
+          state.shake = 12;
+          if (shooter) {
+            shooter.score += 50;
+            shooter.kos += 1;
+            spawnFloatText(target.x, target.y - 26, '+50 KO!', shooter.color);
+            showToast(shooter.name + ' eliminated ' + target.name + '!');
+          } else {
+            spawnFloatText(target.x, target.y - 26, 'ELIMINATED!', '#ef4444');
+          }
+        }
       }
 
       function fireShot(player) {
-        if (player.fireCooldown > 0 || player.energy < 6) return;
-        player.energy = Math.max(0, player.energy - 6);
-        player.fireCooldown = 0.24;
-        const speed = 680;
+        if (!player.alive || player.fireCooldown > 0) return;
+        const rapid = player.rapidTimer > 0;
+        const cost = rapid ? 0 : 6;
+        if (player.energy < cost) return;
+        player.energy = Math.max(0, player.energy - cost);
+        player.fireCooldown = rapid ? 0.10 : 0.24;
+        const speed = 700;
         const muzzleDist = player.radius + 8;
         state.bullets.push({
           ownerId: player.id,
-          color: player.color,
+          color: rapid ? '#fb7185' : player.color,
           x: player.x + Math.cos(player.angle) * muzzleDist,
           y: player.y + Math.sin(player.angle) * muzzleDist,
           vx: Math.cos(player.angle) * speed,
           vy: Math.sin(player.angle) * speed,
           radius: 5,
-          life: 1.15
+          life: 1.1
         });
-        // Subtle recoil
-        player.vx -= Math.cos(player.angle) * 45;
-        player.vy -= Math.sin(player.angle) * 45;
+        player.vx -= Math.cos(player.angle) * 35;
+        player.vy -= Math.sin(player.angle) * 35;
         AudioFX.shoot();
       }
 
-      function spawnFloatText(x, y, text, color) {
-        state.floatTexts.push({ x, y, text, color, life: 0.75, maxLife: 0.75 });
-      }
-
       function triggerPulse(player) {
-        if (player.pulseCooldown > 0 || player.energy < 25) return;
+        if (!player.alive || player.pulseCooldown > 0 || player.energy < 25) return;
         player.energy = Math.max(0, player.energy - 25);
         player.pulseCooldown = 0.85;
-        state.rings.push({ x: player.x, y: player.y, r: player.radius, maxR: 145, color: player.color, alpha: 1 });
+        state.rings.push({ x: player.x, y: player.y, r: player.radius, maxR: 148, color: player.color, alpha: 1 });
         AudioFX.pulse();
         state.shake = Math.min(11, state.shake + 5);
 
         state.players.forEach((other) => {
-          if (other.id === player.id) return;
+          if (other.id === player.id || !other.alive) return;
           const dx = other.x - player.x;
           const dy = other.y - player.y;
           const dist = Math.hypot(dx, dy) || 1;
           if (dist < 150) {
-            const force = (1 - dist / 150) * 540;
-            other.vx += (dx / dist) * force;
-            other.vy += (dy / dist) * force;
-            other.hitFlash = 0.25;
-            spawnBurst(other.x, other.y, player.color, 10);
+            const force = (1 - dist / 150) * 560;
+            damagePlayer(other, 14, player.id, (dx / dist) * force, (dy / dist) * force);
           }
         });
 
@@ -838,20 +964,29 @@
           const dy = h.y - player.y;
           const dist = Math.hypot(dx, dy) || 1;
           if (dist < 155) {
-            h.vx = (dx / dist) * 200;
-            h.vy = (dy / dist) * 200;
+            h.vx = (dx / dist) * 210;
+            h.vy = (dy / dist) * 210;
           }
         });
       }
 
       function updateBotAI(bot, dt) {
+        if (!bot.alive) return;
         let target = null;
-        let bestScore = -Infinity;
+        let bestVal = -Infinity;
+
+        // Prioritize powerups when low HP or nearby
+        for (const pw of state.powerups) {
+          const d = Math.hypot(pw.x - bot.x, pw.y - bot.y) + 1;
+          const weight = (pw.type === 'heal' && bot.hp < 65) ? 600 : 280;
+          if (weight / d > bestVal) { bestVal = weight / d; target = pw; }
+        }
         for (const o of state.orbs) {
           const d = Math.hypot(o.x - bot.x, o.y - bot.y) + 1;
           const val = (o.isStar ? 350 : 120) / d;
-          if (val > bestScore) { bestScore = val; target = o; }
+          if (val > bestVal) { bestVal = val; target = o; }
         }
+
         let ix = 0, iy = 0;
         if (target) {
           const dx = target.x - bot.x;
@@ -864,20 +999,18 @@
           const dx = bot.x - h.x;
           const dy = bot.y - h.y;
           const d = Math.hypot(dx, dy) || 1;
-          if (d < 90) {
-            ix += (dx / d) * 1.8;
-            iy += (dy / d) * 1.8;
-          }
+          if (d < 90) { ix += (dx / d) * 1.8; iy += (dy / d) * 1.8; }
         }
         const mag = Math.hypot(ix, iy);
         if (mag > 1) { ix /= mag; iy /= mag; }
         bot.inputX = ix;
         bot.inputY = iy;
-        bot.boosting = target && target.isStar && bot.energy > 40;
+        bot.boosting = target && target.isStar && bot.energy > 45;
         bot.firing = false;
+
         if (state.screen === 'playing') {
           for (const other of state.players.values()) {
-            if (other.id === bot.id) continue;
+            if (other.id === bot.id || !other.alive) continue;
             const dx = other.x - bot.x;
             const dy = other.y - bot.y;
             const dist = Math.hypot(dx, dy);
@@ -885,48 +1018,46 @@
               triggerPulse(bot);
               break;
             }
-            if (dist < 320 && bot.energy > 28 && Math.random() < dt * 1.4) {
-              const targetAngle = Math.atan2(dy, dx);
-              let diff = Math.abs(targetAngle - bot.angle);
-              if (diff > Math.PI) diff = Math.PI * 2 - diff;
-              if (diff < 0.42) {
-                bot.angle = targetAngle;
-                bot.firing = true;
-                break;
-              }
+            if (dist < 330 && bot.energy > 22 && Math.random() < dt * 1.5) {
+              bot.angle = Math.atan2(dy, dx);
+              bot.firing = true;
+              break;
             }
           }
         }
       }
 
       function updateSimulation(dt) {
-        // Attract mode live animation on Title Screen
-        if (state.screen === 'title') {
+        // Attract-mode animation behind Title / Lobby / Join screens
+        if (state.screen === 'title' || state.screen === 'lobby' || state.screen === 'join') {
           for (const h of state.hazards) {
             h.phase += dt * 3.5;
-            h.x += h.vx * dt * 0.7;
-            h.y += h.vy * dt * 0.7;
+            h.x += h.vx * dt * 0.65;
+            h.y += h.vy * dt * 0.65;
             if (h.x < h.radius || h.x > state.width - h.radius) h.vx *= -1;
             if (h.y < h.radius || h.y > state.height - h.radius) h.vy *= -1;
+            resolveWallCircle(h);
           }
           state.players.forEach((p) => {
             updateBotAI(p, dt);
-            p.vx += p.inputX * 680 * dt;
-            p.vy += p.inputY * 680 * dt;
+            if (Math.hypot(p.inputX, p.inputY) > 0.1) p.angle = Math.atan2(p.inputY, p.inputX);
+            p.vx += p.inputX * 660 * dt;
+            p.vy += p.inputY * 660 * dt;
             const drag = Math.pow(0.08, dt);
-            p.vx *= drag;
-            p.vy *= drag;
+            p.vx *= drag; p.vy *= drag;
             p.x = Math.max(p.radius, Math.min(state.width - p.radius, p.x + p.vx * dt));
             p.y = Math.max(p.radius, Math.min(state.height - p.radius, p.y + p.vy * dt));
+            resolveWallCircle(p);
             p.trail.push({ x: p.x, y: p.y });
-            if (p.trail.length > 10) p.trail.shift();
+            if (p.trail.length > 9) p.trail.shift();
           });
           return;
         }
 
         if (state.screen !== 'playing' || state.paused || state.gameOver) return;
 
-        if (!state.endless) {
+        // Match countdown
+        if (state.settings.duration > 0) {
           state.timeLeft -= dt;
           if (state.timeLeft <= 0) {
             state.timeLeft = 0;
@@ -938,69 +1069,102 @@
           }
         }
 
-        const p1 = state.players.get('local-p1');
-        if (p1) {
-          const kx = (state.keys.right ? 1 : 0) - (state.keys.left ? 1 : 0);
-          const ky = (state.keys.down ? 1 : 0) - (state.keys.up ? 1 : 0);
-          if (kx !== 0 || ky !== 0) {
-            const m = Math.hypot(kx, ky) || 1;
-            p1.inputX = kx / m;
-            p1.inputY = ky / m;
-          } else if (!padState.dragging) {
-            p1.inputX = 0;
-            p1.inputY = 0;
-          }
-          p1.boosting = state.keys.boost || padState.boosting;
-          p1.firing = state.keys.fire || padState.firing;
-          if (state.keys.pulse) {
-            triggerPulse(p1);
-            state.keys.pulse = false;
+        // Power-up spawner
+        if (state.settings.powerups) {
+          state.powerupTimer -= dt;
+          if (state.powerupTimer <= 0) {
+            spawnPowerup();
+            state.powerupTimer = 7.5;
           }
         }
 
-        state.players.forEach((p) => {
-          if (p.isBot) updateBotAI(p, dt);
-          if (Math.hypot(p.inputX, p.inputY) > 0.12) {
-            p.angle = Math.atan2(p.inputY, p.inputX);
+        // Solo mode keyboard/touch input for local-p1
+        if (state.playMode === 'solo') {
+          const p1 = state.players.get('local-p1');
+          if (p1) {
+            const kx = (state.keys.right ? 1 : 0) - (state.keys.left ? 1 : 0);
+            const ky = (state.keys.down ? 1 : 0) - (state.keys.up ? 1 : 0);
+            if (kx !== 0 || ky !== 0) {
+              const m = Math.hypot(kx, ky) || 1;
+              p1.inputX = kx / m;
+              p1.inputY = ky / m;
+            } else if (!padState.dragging) {
+              p1.inputX = 0;
+              p1.inputY = 0;
+            }
+            p1.boosting = state.keys.boost || padState.boosting;
+            p1.firing = state.keys.fire || padState.firing;
+            if (state.keys.pulse) {
+              triggerPulse(p1);
+              state.keys.pulse = false;
+            }
           }
-          if (p.pulseTrigger) { triggerPulse(p); p.pulseTrigger = false; }
+        }
+
+        // Update Players
+        state.players.forEach((p) => {
+          if (!p.alive) {
+            p.respawnTimer -= dt;
+            if (p.respawnTimer <= 0) {
+              const sp = findSafeSpawn();
+              p.x = sp.x; p.y = sp.y;
+              p.vx = 0; p.vy = 0;
+              p.hp = p.maxHp;
+              p.energy = 100;
+              p.alive = true;
+              p.invulnTimer = 2.0;
+              p.trail = [];
+              spawnBurst(p.x, p.y, p.color, 14);
+            }
+            return;
+          }
+
+          if (p.isBot) updateBotAI(p, dt);
+          if (Math.hypot(p.inputX, p.inputY) > 0.12) p.angle = Math.atan2(p.inputY, p.inputX);
+          if (p.invulnTimer > 0) p.invulnTimer = Math.max(0, p.invulnTimer - dt);
+          if (p.shieldTimer > 0) p.shieldTimer = Math.max(0, p.shieldTimer - dt);
+          if (p.rapidTimer > 0) p.rapidTimer = Math.max(0, p.rapidTimer - dt);
+          if (p.overdriveTimer > 0) p.overdriveTimer = Math.max(0, p.overdriveTimer - dt);
           if (p.pulseCooldown > 0) p.pulseCooldown = Math.max(0, p.pulseCooldown - dt);
           if (p.fireCooldown > 0) p.fireCooldown = Math.max(0, p.fireCooldown - dt);
-          if (p.firing) fireShot(p);
           if (p.hitFlash > 0) p.hitFlash = Math.max(0, p.hitFlash - dt);
 
-          const isBoosting = p.boosting && p.energy > 2 && (Math.abs(p.inputX) > 0.05 || Math.abs(p.inputY) > 0.05);
-          if (isBoosting) {
-            p.energy = Math.max(0, p.energy - 42 * dt);
+          if (p.pulseTrigger) { triggerPulse(p); p.pulseTrigger = false; }
+          if (p.firing) fireShot(p);
+
+          const hasOverdrive = p.overdriveTimer > 0;
+          const isBoosting = (p.boosting || hasOverdrive) && (hasOverdrive || p.energy > 2) && (Math.abs(p.inputX) > 0.05 || Math.abs(p.inputY) > 0.05);
+          if (isBoosting && !hasOverdrive) {
+            p.energy = Math.max(0, p.energy - 40 * dt);
             if (Math.random() < 0.35) spawnBurst(p.x, p.y, '#fbbf24', 1);
           } else {
-            p.energy = Math.min(100, p.energy + 22 * dt);
+            p.energy = Math.min(100, p.energy + 24 * dt);
           }
 
-          const accel = isBoosting ? 1520 : 940;
+          const accel = hasOverdrive ? 1680 : (isBoosting ? 1500 : 940);
           p.vx += p.inputX * accel * dt;
           p.vy += p.inputY * accel * dt;
 
           const drag = Math.pow(0.06, dt);
-          p.vx *= drag;
-          p.vy *= drag;
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
+          p.vx *= drag; p.vy *= drag;
+          p.x += p.vx * dt; p.y += p.vy * dt;
 
           if (p.x < p.radius) { p.x = p.radius; p.vx = Math.abs(p.vx) * 0.6; }
           if (p.x > state.width - p.radius) { p.x = state.width - p.radius; p.vx = -Math.abs(p.vx) * 0.6; }
           if (p.y < p.radius) { p.y = p.radius; p.vy = Math.abs(p.vy) * 0.6; }
           if (p.y > state.height - p.radius) { p.y = state.height - p.radius; p.vy = -Math.abs(p.vy) * 0.6; }
+          resolveWallCircle(p);
 
           p.trail.push({ x: p.x, y: p.y });
           if (p.trail.length > 10) p.trail.shift();
 
+          // Orbs pickup
           for (let i = state.orbs.length - 1; i >= 0; i--) {
             const o = state.orbs[i];
             if (Math.hypot(p.x - o.x, p.y - o.y) < p.radius + o.radius + 2) {
-              p.score += o.isStar ? 50 : 10;
+              p.score += o.isStar ? 40 : 10;
               p.energy = Math.min(100, p.energy + (o.isStar ? 35 : 12));
-              spawnBurst(o.x, o.y, o.isStar ? '#facc15' : p.color, o.isStar ? 18 : 9);
+              spawnBurst(o.x, o.y, o.isStar ? '#facc15' : p.color, o.isStar ? 16 : 8);
               if (o.isStar) AudioFX.star(); else AudioFX.orb();
               const wasStar = o.isStar;
               state.orbs.splice(i, 1);
@@ -1008,84 +1172,74 @@
             }
           }
 
+          // Power-up pickup
+          for (let i = state.powerups.length - 1; i >= 0; i--) {
+            const pw = state.powerups[i];
+            if (Math.hypot(p.x - pw.x, p.y - pw.y) < p.radius + pw.radius + 2) {
+              if (pw.type === 'shield') p.shieldTimer = 6.5;
+              else if (pw.type === 'rapid') p.rapidTimer = 6.5;
+              else if (pw.type === 'heal') p.hp = Math.min(p.maxHp, p.hp + 40);
+              else if (pw.type === 'overdrive') { p.overdriveTimer = 5.5; p.energy = 100; }
+              spawnBurst(pw.x, pw.y, pw.color, 18);
+              spawnFloatText(p.x, p.y - 26, pw.label + '!', pw.color);
+              AudioFX.powerup();
+              state.powerups.splice(i, 1);
+            }
+          }
+
+          // Hazard collision
           for (const h of state.hazards) {
             const dx = p.x - h.x;
             const dy = p.y - h.y;
             const dist = Math.hypot(dx, dy) || 1;
             if (dist < p.radius + h.radius) {
-              p.vx = (dx / dist) * 350;
-              p.vy = (dy / dist) * 350;
-              p.score = Math.max(0, p.score - 15);
-              p.hitFlash = 0.35;
-              state.shake = Math.min(12, state.shake + 6);
-              spawnBurst(p.x, p.y, '#ef4444', 14);
-              AudioFX.hit();
-              h.vx = -(dx / dist) * 95;
-              h.vy = -(dy / dist) * 95;
+              damagePlayer(p, 25, null, (dx / dist) * 360, (dy / dist) * 360);
+              h.vx = -(dx / dist) * 100;
+              h.vy = -(dy / dist) * 100;
             }
           }
         });
 
+        // Update Hazards
         for (const h of state.hazards) {
           h.phase += dt * 4;
-          h.x += h.vx * dt;
-          h.y += h.vy * dt;
+          h.x += h.vx * dt; h.y += h.vy * dt;
           if (h.x < h.radius || h.x > state.width - h.radius) h.vx *= -1;
           if (h.y < h.radius || h.y > state.height - h.radius) h.vy *= -1;
           h.x = Math.max(h.radius, Math.min(state.width - h.radius, h.x));
           h.y = Math.max(h.radius, Math.min(state.height - h.radius, h.y));
+          resolveWallCircle(h);
         }
 
-        for (let i = state.particles.length - 1; i >= 0; i--) {
-          const pt = state.particles[i];
-          pt.life -= dt;
-          pt.x += pt.vx * dt;
-          pt.y += pt.vy * dt;
-          pt.vx *= 0.94;
-          pt.vy *= 0.94;
-          if (pt.life <= 0) state.particles.splice(i, 1);
-        }
-
+        // Update Bullets
         for (let i = state.bullets.length - 1; i >= 0; i--) {
           const b = state.bullets[i];
           b.life -= dt;
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          if (b.life <= 0 || b.x < 0 || b.x > state.width || b.y < 0 || b.y > state.height) {
-            spawnBurst(Math.max(4, Math.min(state.width - 4, b.x)), Math.max(4, Math.min(state.height - 4, b.y)), b.color, 4);
+          b.x += b.vx * dt; b.y += b.vy * dt;
+          if (b.life <= 0 || b.x < 0 || b.x > state.width || b.y < 0 || b.y > state.height || pointInsideWall(b.x, b.y, b.radius)) {
+            spawnBurst(Math.max(4, Math.min(state.width - 4, b.x)), Math.max(4, Math.min(state.height - 4, b.y)), b.color, 5);
             state.bullets.splice(i, 1);
             continue;
           }
 
-          let hitSomething = false;
-          // Hit rival players
+          let hit = false;
           for (const other of state.players.values()) {
-            if (other.id === b.ownerId) continue;
+            if (other.id === b.ownerId || !other.alive) continue;
             if (Math.hypot(other.x - b.x, other.y - b.y) < other.radius + b.radius) {
               const spd = Math.hypot(b.vx, b.vy) || 1;
-              other.vx += (b.vx / spd) * 320;
-              other.vy += (b.vy / spd) * 320;
-              other.hitFlash = 0.28;
-              other.score = Math.max(0, other.score - 10);
-              const shooter = state.players.get(b.ownerId);
-              if (shooter) shooter.score += 20;
-              state.shake = Math.min(10, state.shake + 4);
-              spawnBurst(b.x, b.y, b.color, 14);
-              spawnFloatText(other.x, other.y - 22, '+20 HIT!', b.color);
-              AudioFX.hit();
+              damagePlayer(other, 22, b.ownerId, (b.vx / spd) * 290, (b.vy / spd) * 290);
               state.bullets.splice(i, 1);
-              hitSomething = true;
+              hit = true;
               break;
             }
           }
-          if (hitSomething) continue;
+          if (hit) continue;
 
-          // Hit hazard mines
           for (const h of state.hazards) {
             if (Math.hypot(h.x - b.x, h.y - b.y) < h.radius + b.radius) {
               const spd = Math.hypot(b.vx, b.vy) || 1;
-              h.vx = (b.vx / spd) * 140;
-              h.vy = (b.vy / spd) * 140;
+              h.vx = (b.vx / spd) * 145;
+              h.vy = (b.vy / spd) * 145;
               spawnBurst(b.x, b.y, '#f87171', 7);
               state.bullets.splice(i, 1);
               break;
@@ -1093,17 +1247,20 @@
           }
         }
 
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const pt = state.particles[i];
+          pt.life -= dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+          pt.vx *= 0.94; pt.vy *= 0.94;
+          if (pt.life <= 0) state.particles.splice(i, 1);
+        }
         for (let i = state.floatTexts.length - 1; i >= 0; i--) {
           const ft = state.floatTexts[i];
-          ft.life -= dt;
-          ft.y -= 36 * dt;
+          ft.life -= dt; ft.y -= 38 * dt;
           if (ft.life <= 0) state.floatTexts.splice(i, 1);
         }
-
         for (let i = state.rings.length - 1; i >= 0; i--) {
           const r = state.rings[i];
-          r.r += 440 * dt;
-          r.alpha = Math.max(0, 1 - r.r / r.maxR);
+          r.r += 440 * dt; r.alpha = Math.max(0, 1 - r.r / r.maxR);
           if (r.r >= r.maxR) state.rings.splice(i, 1);
         }
 
@@ -1121,19 +1278,29 @@
           ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
         }
 
-        // Deep Space Arcade Background
         ctx.fillStyle = '#050811';
         ctx.fillRect(0, 0, state.width, state.height);
 
         // Neon Grid
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.065)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
         ctx.lineWidth = 1;
         const gridSize = 48;
-        for (let x = 0; x < state.width; x += gridSize) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, state.height); ctx.stroke();
-        }
-        for (let y = 0; y < state.height; y += gridSize) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(state.width, y); ctx.stroke();
+        for (let x = 0; x < state.width; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, state.height); ctx.stroke(); }
+        for (let y = 0; y < state.height; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(state.width, y); ctx.stroke(); }
+
+        // Arena Walls
+        for (const w of state.walls) {
+          ctx.save();
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.45)';
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(w.x, w.y, w.w, w.h, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
         }
 
         // Shockwave Rings
@@ -1142,27 +1309,42 @@
           ctx.globalAlpha = r.alpha * 0.85;
           ctx.strokeStyle = r.color;
           ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-          ctx.stroke();
+          ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
           ctx.restore();
         }
 
-        // Orbs & Stars
         const t = performance.now() * 0.004;
+        // Orbs
         for (const o of state.orbs) {
           const pulse = Math.sin(t + o.phase) * 2;
           ctx.save();
           ctx.shadowBlur = o.isStar ? 20 : 12;
           ctx.shadowColor = o.isStar ? '#facc15' : '#38bdf8';
           ctx.fillStyle = o.isStar ? '#fde047' : '#7dd3fc';
-          ctx.beginPath();
-          ctx.arc(o.x, o.y, o.radius + pulse * 0.5, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(o.x, o.y, o.radius + pulse * 0.5, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
 
-        // Hazards
+        // Power-Ups
+        for (const pw of state.powerups) {
+          const bob = Math.sin(t * 1.4 + pw.phase) * 3;
+          ctx.save();
+          ctx.translate(pw.x, pw.y + bob);
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = pw.color;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          ctx.strokeStyle = pw.color;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(0, 0, pw.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.font = '15px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pw.icon, 0, 1);
+          ctx.restore();
+        }
+
+        // Hazard Mines
         for (const h of state.hazards) {
           const pulse = 1 + Math.sin(h.phase) * 0.12;
           ctx.save();
@@ -1173,14 +1355,9 @@
           ctx.fillStyle = '#991b1b';
           ctx.strokeStyle = '#f87171';
           ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, h.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
           ctx.fillStyle = '#fca5a5';
-          ctx.beginPath();
-          ctx.arc(0, 0, 4, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
 
@@ -1192,16 +1369,12 @@
           ctx.strokeStyle = b.color;
           ctx.lineWidth = 5;
           ctx.lineCap = 'round';
-          const tailX = b.x - b.vx * 0.025;
-          const tailY = b.y - b.vy * 0.025;
           ctx.beginPath();
-          ctx.moveTo(tailX, tailY);
+          ctx.moveTo(b.x - b.vx * 0.025, b.y - b.vy * 0.025);
           ctx.lineTo(b.x, b.y);
           ctx.stroke();
           ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(b.x, b.y, 2.4, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
 
@@ -1210,49 +1383,57 @@
           ctx.save();
           ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
           ctx.fillStyle = pt.color;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
 
-        // Players
+        // Players + Health Bars
         state.players.forEach((p) => {
+          if (!p.alive) return;
+
           for (let i = 0; i < p.trail.length; i++) {
             const tr = p.trail[i];
             ctx.save();
-            ctx.globalAlpha = (i / p.trail.length) * 0.28;
+            ctx.globalAlpha = (i / p.trail.length) * 0.25;
             ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(tr.x, tr.y, p.radius * (0.4 + 0.5 * (i / p.trail.length)), 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(tr.x, tr.y, p.radius * (0.4 + 0.5 * (i / p.trail.length)), 0, Math.PI * 2); ctx.fill();
             ctx.restore();
           }
 
           ctx.save();
+          if (p.invulnTimer > 0 && Math.floor(performance.now() / 100) % 2 === 0) ctx.globalAlpha = 0.55;
+
+          // Shield Halo
+          if (p.shieldTimer > 0) {
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = '#38bdf8';
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.radius + 9, 0, Math.PI * 2); ctx.stroke();
+          }
+
+          // Energy Ring
+          ctx.shadowBlur = 0;
           ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius + 5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * (p.energy / 100)));
           ctx.stroke();
 
+          // Player Body
           ctx.shadowBlur = 18;
           ctx.shadowColor = p.hitFlash > 0 ? '#ef4444' : p.color;
           ctx.fillStyle = p.hitFlash > 0 ? '#fca5a5' : p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
 
           ctx.fillStyle = '#0f172a';
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius * 0.45, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * 0.45, 0, Math.PI * 2); ctx.fill();
 
-          // Aim Direction Turret / Nose Pointer
+          // Directional Aim Nose
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.angle);
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = p.rapidTimer > 0 ? '#fb7185' : '#ffffff';
           ctx.beginPath();
           ctx.moveTo(p.radius + 7, 0);
           ctx.lineTo(p.radius - 2, -5);
@@ -1261,17 +1442,28 @@
           ctx.fill();
           ctx.restore();
 
+          // Name + Health Bar (in gameplay)
           if (state.screen === 'playing') {
             ctx.shadowBlur = 0;
+            const barW = 42;
+            const barH = 5;
+            const bx = p.x - barW / 2;
+            const by = p.y - p.radius - 16;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(bx, by, barW, barH);
+            const hpPct = Math.max(0, p.hp / p.maxHp);
+            ctx.fillStyle = hpPct > 0.5 ? '#34d399' : (hpPct > 0.25 ? '#fbbf24' : '#ef4444');
+            ctx.fillRect(bx, by, barW * hpPct, barH);
+
             ctx.font = '800 11px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#f8fafc';
-            ctx.fillText(p.label, p.x, p.y - p.radius - 10);
+            ctx.fillText(p.name, p.x, by - 5);
           }
           ctx.restore();
         });
 
-        // Floating Hit Texts
+        // Floating Texts
         for (const ft of state.floatTexts) {
           ctx.save();
           ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
@@ -1289,48 +1481,72 @@
 
       let lastHudRender = 0;
       function renderHud() {
-        document.getElementById('hudTimer').textContent = state.endless ? '∞' : String(Math.ceil(state.timeLeft));
+        document.getElementById('hudTimer').textContent = state.settings.duration === 0 ? '∞' : String(Math.ceil(state.timeLeft));
         const sorted = Array.from(state.players.values()).sort((a, b) => b.score - a.score);
         document.getElementById('hudPlayers').innerHTML = sorted.map((p) => {
           return '<div class="hud-pill flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs">' +
             '<span class="w-2.5 h-2.5 rounded-full" style="background:' + p.color + '"></span>' +
-            '<span class="font-bold text-slate-200">' + p.label + '</span>' +
+            '<span class="font-bold text-slate-200">' + escapeHtml(p.name) + '</span>' +
             '<span class="font-mono font-black text-white">' + p.score + '</span>' +
           '</div>';
         }).join('');
+      }
 
-        const humans = Array.from(state.players.values()).filter((p) => !p.isBot).length;
-        document.getElementById('hudControllerCount').textContent = String(humans);
-        document.getElementById('titleConnStatus').textContent =
-          humans + (humans === 1 ? ' Controller Ready · Serverless P2P' : ' Controllers Ready · Serverless P2P');
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      function renderLobbyPlayers() {
+        const listEl = document.getElementById('lobbyPlayersList');
+        const countEl = document.getElementById('lobbyPlayerCountPill');
+        const phones = Array.from(state.roomPhones.values());
+        countEl.textContent = phones.length + ' Joined';
+
+        if (phones.length === 0) {
+          listEl.innerHTML = '<div class="py-5 text-center text-xs text-slate-400 border border-dashed border-slate-700/80 rounded-xl">Waiting for players to scan QR or enter code <strong class="text-sky-400 font-mono">' + activeRoomCode + '</strong>...</div>';
+          return;
+        }
+        listEl.innerHTML = phones.map((ph) => {
+          const pal = PLAYER_PALETTE[ph.colorIdx % PLAYER_PALETTE.length];
+          return '<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800">' +
+            '<div class="flex items-center gap-2.5">' +
+              '<span class="w-3.5 h-3.5 rounded-full" style="background:' + pal.hex + ';box-shadow:0 0 10px ' + pal.hex + '"></span>' +
+              '<span class="text-xs font-extrabold text-white">' + escapeHtml(ph.name) + '</span>' +
+            '</div>' +
+            '<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Phone Ready</span>' +
+          '</div>';
+        }).join('');
       }
 
       function showOverlay(kind) {
         const overlay = document.getElementById('gameOverlay');
         const sorted = Array.from(state.players.values()).sort((a, b) => b.score - a.score);
         const primaryBtn = document.getElementById('overlayPrimaryBtn');
+        const exitBtn = document.getElementById('overlayExitBtn');
 
         if (kind === 'gameover') {
           const winner = sorted[0];
           document.getElementById('overlayBadge').textContent = 'Match Complete';
-          document.getElementById('overlayTitle').textContent = winner ? (winner.label + ' Wins!') : 'Time Up!';
-          document.getElementById('overlayDesc').textContent = 'Final Arena Standings';
+          document.getElementById('overlayTitle').textContent = winner ? (winner.name + ' Wins!') : 'Time Up!';
           primaryBtn.textContent = 'Play Again';
         } else {
           document.getElementById('overlayBadge').textContent = 'Paused';
           document.getElementById('overlayTitle').textContent = 'Game Paused';
-          document.getElementById('overlayDesc').textContent = 'Current Match Standings';
           primaryBtn.textContent = 'Resume';
         }
+        exitBtn.textContent = state.playMode === 'room' ? 'Room Lobby' : 'Main Menu';
 
         document.getElementById('overlayScores').innerHTML = sorted.map((p, idx) => {
           return '<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">' +
             '<div class="flex items-center gap-2">' +
               '<span class="font-black text-slate-400">#' + (idx + 1) + '</span>' +
               '<span class="w-2.5 h-2.5 rounded-full" style="background:' + p.color + '"></span>' +
-              '<span class="font-bold text-white">' + p.label + '</span>' +
+              '<span class="font-bold text-white">' + escapeHtml(p.name) + '</span>' +
             '</div>' +
-            '<span class="font-mono font-black text-sky-400">' + p.score + '</span>' +
+            '<div class="flex items-center gap-3 font-mono">' +
+              '<span class="text-[11px] text-rose-400 font-bold">' + p.kos + ' KO</span>' +
+              '<span class="font-black text-sky-400">' + p.score + '</span>' +
+            '</div>' +
           '</div>';
         }).join('');
 
@@ -1347,6 +1563,7 @@
         canvas.height = Math.floor(state.height * dpr);
         const ctx = canvas.getContext('2d');
         if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        buildArenaWalls();
         renderCanvas();
       }
 
@@ -1354,7 +1571,6 @@
         if (!state.lastFrame) state.lastFrame = ts;
         const dt = Math.min(0.05, (ts - state.lastFrame) / 1000);
         state.lastFrame = ts;
-
         if (state.screen !== 'pad') {
           updateSimulation(dt);
           renderCanvas();
@@ -1367,172 +1583,13 @@
       }
 
       // ============================================================
-      // 4. VIRTUAL CONTROLLER BINDINGS (Floating Overlay + Full Phone Pad)
+      // 5. QR CODE + 4-DIGIT ROOM CODE NETWORKING (PeerJS + Tab Link)
       // ============================================================
-      const padState = {
-        dragging: false,
-        pointerId: null,
-        x: 0,
-        y: 0,
-        boosting: false,
-        firing: false,
-        transport: 'local', // 'local' | 'webrtc' | 'broadcast'
-        remoteId: 'phone-' + Math.floor(100 + Math.random() * 900)
-      };
-
-      function sendPadInput(pulseNow) {
-        const payload = {
-          type: 'input',
-          id: padState.remoteId,
-          colorIdx: state.localColorIdx,
-          x: Number(padState.x.toFixed(3)),
-          y: Number(padState.y.toFixed(3)),
-          boost: padState.boosting,
-          fire: padState.firing,
-          pulse: Boolean(pulseNow)
-        };
-
-        document.getElementById('padTelemetry').textContent =
-          'X: ' + payload.x.toFixed(2) + ' · Y: ' + payload.y.toFixed(2);
-
-        if (state.screen === 'playing') {
-          const p1 = state.players.get('local-p1');
-          if (p1 && !state.paused && !state.gameOver) {
-            p1.inputX = payload.x;
-            p1.inputY = payload.y;
-            p1.boosting = payload.boost;
-            p1.firing = payload.fire;
-            if (payload.pulse) p1.pulseTrigger = true;
-          }
-        } else if (padState.transport === 'peerjs') {
-          if (padPeerConn && padPeerConn.open) {
-            try { padPeerConn.send(payload); } catch (_) {}
-          }
-        } else if (padState.transport === 'webrtc') {
-          if (padRtcChannel && padRtcChannel.readyState === 'open') {
-            try { padRtcChannel.send(JSON.stringify(payload)); } catch (_) {}
-          }
-        } else if (padState.transport === 'broadcast') {
-          if (bcChannel) {
-            try { bcChannel.postMessage(payload); } catch (_) {}
-          }
-        }
-      }
-
-      function bindJoystick(baseEl, knobEl) {
-        function moveStick(clientX, clientY) {
-          const rect = baseEl.getBoundingClientRect();
-          const cx = rect.left + rect.width / 2;
-          const cy = rect.top + rect.height / 2;
-          const maxDist = rect.width * 0.34;
-          let dx = clientX - cx;
-          let dy = clientY - cy;
-          const dist = Math.hypot(dx, dy);
-          if (dist > maxDist) {
-            dx = (dx / dist) * maxDist;
-            dy = (dy / dist) * maxDist;
-          }
-          knobEl.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px)';
-          padState.x = dx / maxDist;
-          padState.y = dy / maxDist;
-          sendPadInput(false);
-        }
-
-        function releaseStick(e) {
-          if (!padState.dragging) return;
-          if (e && padState.pointerId !== null && e.pointerId !== padState.pointerId) return;
-          padState.dragging = false;
-          padState.pointerId = null;
-          padState.x = 0;
-          padState.y = 0;
-          knobEl.style.transform = 'translate(0px, 0px)';
-          sendPadInput(false);
-        }
-
-        baseEl.addEventListener('pointerdown', (e) => {
-          AudioFX.unlock();
-          e.preventDefault();
-          padState.dragging = true;
-          padState.pointerId = e.pointerId;
-          try { baseEl.setPointerCapture(e.pointerId); } catch (_) {}
-          moveStick(e.clientX, e.clientY);
-        });
-        baseEl.addEventListener('pointermove', (e) => {
-          if (!padState.dragging || e.pointerId !== padState.pointerId) return;
-          e.preventDefault();
-          moveStick(e.clientX, e.clientY);
-        });
-        baseEl.addEventListener('pointerup', releaseStick);
-        baseEl.addEventListener('pointercancel', releaseStick);
-      }
-
-      function bindActionButtons(boostEl, pulseEl, fireEl) {
-        boostEl.addEventListener('pointerdown', (e) => {
-          AudioFX.unlock();
-          e.preventDefault();
-          padState.boosting = true;
-          boostEl.classList.add('pressed');
-          vibratePhone(18);
-          AudioFX.boost();
-          sendPadInput(false);
-        });
-        const stopBoost = () => {
-          padState.boosting = false;
-          boostEl.classList.remove('pressed');
-          sendPadInput(false);
-        };
-        boostEl.addEventListener('pointerup', stopBoost);
-        boostEl.addEventListener('pointercancel', stopBoost);
-        boostEl.addEventListener('pointerleave', stopBoost);
-
-        pulseEl.addEventListener('pointerdown', (e) => {
-          AudioFX.unlock();
-          e.preventDefault();
-          pulseEl.classList.add('pressed');
-          vibratePhone(35);
-          sendPadInput(true);
-        });
-        const stopPulse = () => pulseEl.classList.remove('pressed');
-        pulseEl.addEventListener('pointerup', stopPulse);
-        pulseEl.addEventListener('pointercancel', stopPulse);
-
-        fireEl.addEventListener('pointerdown', (e) => {
-          AudioFX.unlock();
-          e.preventDefault();
-          padState.firing = true;
-          fireEl.classList.add('pressed');
-          vibratePhone(14);
-          sendPadInput(false);
-        });
-        const stopFire = () => {
-          padState.firing = false;
-          fireEl.classList.remove('pressed');
-          sendPadInput(false);
-        };
-        fireEl.addEventListener('pointerup', stopFire);
-        fireEl.addEventListener('pointercancel', stopFire);
-        fireEl.addEventListener('pointerleave', stopFire);
-      }
-
-      bindJoystick(document.getElementById('overlayJoyBase'), document.getElementById('overlayJoyKnob'));
-      bindActionButtons(document.getElementById('overlayBoostBtn'), document.getElementById('overlayPulseBtn'), document.getElementById('overlayFireBtn'));
-      bindJoystick(document.getElementById('fullJoyBase'), document.getElementById('fullJoyKnob'));
-      bindActionButtons(document.getElementById('fullBoostBtn'), document.getElementById('fullPulseBtn'), document.getElementById('fullFireBtn'));
-
-      // ============================================================
-      // 5. SERVERLESS CONNECTIONS (WebRTC DataChannel + BroadcastChannel)
-      // ============================================================
-      const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-      let pendingHostPC = null;
-      const hostRemotePeers = new Map();
-      const hostPeerJsConns = new Map();
+      let activeRoomCode = '';
       let hostPeerJs = null;
       let padPeerJs = null;
       let padPeerConn = null;
-      let padRtcPC = null;
-      let padRtcChannel = null;
       let bcChannel = null;
-      let activeRoomCode = '';
 
       function generateRoomCode() {
         return String(Math.floor(1000 + Math.random() * 9000));
@@ -1541,11 +1598,10 @@
       function getJoinUrl(code) {
         try {
           if (window.location && window.location.protocol && window.location.protocol.startsWith('http')) {
-            const base = window.location.origin + window.location.pathname;
-            return base + '?room=' + code;
+            return window.location.origin + window.location.pathname + '?room=' + code;
           }
         } catch (_) {}
-        return 'NEON-ARENA-ROOM:' + code;
+        return 'NEON-ARENA:' + code;
       }
 
       function renderQrInto(elId, text, size) {
@@ -1565,96 +1621,143 @@
             return;
           }
         } catch (_) {}
-        // Clean SVG fallback if CDN QR library is unavailable
-        el.innerHTML = '<div class="text-[10px] font-mono font-black text-slate-900 leading-tight p-1 text-center">CODE<br/>' + activeRoomCode + '</div>';
+        el.innerHTML = '<div class="text-xs font-mono font-black text-slate-900 text-center">ROOM<br/>' + activeRoomCode + '</div>';
       }
 
-      function setupHostRoom(code) {
-        activeRoomCode = code || generateRoomCode();
-        const joinUrl = getJoinUrl(activeRoomCode);
-        const spaced = activeRoomCode.split('').join(' ');
+      function upsertPhonePlayer(pid, data, source, conn) {
+        const existing = state.roomPhones.get(pid);
+        const name = (data.name && String(data.name).trim().slice(0, 12)) || (existing ? existing.name : ('Player ' + (state.roomPhones.size + 1)));
+        const colorIdx = typeof data.colorIdx === 'number' ? (data.colorIdx % PLAYER_PALETTE.length) : (existing ? existing.colorIdx : state.roomPhones.size % PLAYER_PALETTE.length);
 
-        const titleCodeEl = document.getElementById('titleRoomCode');
-        const lobbyCodeEl = document.getElementById('lobbyRoomCode');
-        const hudCodeEl = document.getElementById('hudRoomCode');
-        if (titleCodeEl) titleCodeEl.textContent = activeRoomCode;
-        if (lobbyCodeEl) lobbyCodeEl.textContent = spaced;
-        if (hudCodeEl) hudCodeEl.textContent = activeRoomCode;
+        const isNew = !existing;
+        state.roomPhones.set(pid, { id: pid, name, colorIdx, source, conn: conn || (existing ? existing.conn : null) });
 
-        renderQrInto('titleQrMini', joinUrl, 40);
-        renderQrInto('lobbyQrBox', joinUrl, 140);
-
-        // Re-bind BroadcastChannel for this room code
-        initBroadcastChannel(activeRoomCode);
-
-        // Initialize PeerJS serverless signaling host for cross-device QR/4-digit joins
-        const statusEl = document.getElementById('peerHostStatus');
-        if (hostPeerJs) {
-          try { hostPeerJs.destroy(); } catch (_) {}
-          hostPeerJs = null;
+        // Sync live into active arena if already playing
+        let arenaP = state.players.get(pid);
+        if (state.screen === 'playing' && state.playMode === 'room') {
+          if (!arenaP) {
+            arenaP = createPlayer(pid, name, colorIdx, false, source);
+            state.players.set(pid, arenaP);
+          } else {
+            arenaP.name = name;
+            arenaP.colorIdx = colorIdx;
+            arenaP.color = PLAYER_PALETTE[colorIdx].hex;
+          }
         }
+        if (isNew) {
+          showToast(name + ' joined! Tap Fullscreen for best display.');
+          AudioFX.orb();
+          const lfs = document.getElementById('lobbyFullscreenBtn');
+          if (lfs && !isFullscreenActive()) {
+            lfs.className = 'px-3 py-1.5 rounded-xl text-xs font-black bg-sky-400 text-slate-950 shadow-lg shadow-sky-500/30 transition flex items-center gap-1.5 animate-pulse';
+          }
+        }
+        renderLobbyPlayers();
+        renderHud();
+      }
+
+      function applyRemotePacket(pid, msg, source, conn) {
+        if (!msg) return;
+        if (msg.type === 'profile' || msg.type === 'input') {
+          upsertPhonePlayer(pid, msg, source, conn);
+        }
+        if (msg.type === 'input' && state.screen === 'playing' && state.playMode === 'room' && !state.paused && !state.gameOver) {
+          const p = state.players.get(pid);
+          if (p) {
+            p.inputX = Math.max(-1, Math.min(1, Number(msg.x) || 0));
+            p.inputY = Math.max(-1, Math.min(1, Number(msg.y) || 0));
+            p.boosting = Boolean(msg.boost);
+            p.firing = Boolean(msg.fire);
+            if (msg.pulse) p.pulseTrigger = true;
+          }
+        }
+      }
+
+      function initRoomBroadcast(code) {
+        try {
+          if (typeof BroadcastChannel === 'undefined') return;
+          if (bcChannel) { try { bcChannel.close(); } catch (_) {} }
+          bcChannel = new BroadcastChannel('neon_arena_room_' + code);
+          bcChannel.onmessage = (ev) => {
+            const msg = ev.data;
+            if (!msg) return;
+            if ((msg.type === 'input' || msg.type === 'profile') && state.screen !== 'pad') {
+              applyRemotePacket(msg.id || 'tab-p', msg, 'broadcast', null);
+            } else if (msg.type === 'telemetry' && state.screen === 'pad' && msg.id === myPhoneProfile.id) {
+              updatePhoneTelemetryUI(msg);
+            }
+          };
+        } catch (_) {}
+      }
+
+      function openHostRoom(code) {
+        activeRoomCode = code || generateRoomCode();
+        state.roomPhones.clear();
+        const joinUrl = getJoinUrl(activeRoomCode);
+
+        document.getElementById('lobbyRoomCode').textContent = activeRoomCode.split('').join(' ');
+        document.getElementById('hudRoomCode').textContent = activeRoomCode;
+        document.getElementById('quickQrCodeText').textContent = activeRoomCode.split('').join(' ');
+        renderQrInto('lobbyQrBox', joinUrl, 152);
+        renderQrInto('quickQrBox', joinUrl, 152);
+        renderLobbyPlayers();
+
+        initRoomBroadcast(activeRoomCode);
+
+        const statusEl = document.getElementById('lobbyPeerStatus');
+        if (hostPeerJs) { try { hostPeerJs.destroy(); } catch (_) {} hostPeerJs = null; }
         if (typeof Peer === 'undefined') {
-          if (statusEl) statusEl.textContent = 'Local/Tab room ' + activeRoomCode + ' ready';
+          statusEl.textContent = 'Room ' + activeRoomCode + ' ready!';
           return;
         }
-        if (statusEl) statusEl.textContent = 'Opening room ' + activeRoomCode + '...';
+        statusEl.textContent = 'Opening Room ' + activeRoomCode + '...';
         try {
-          const peerId = 'neon-arena-room-' + activeRoomCode;
-          hostPeerJs = new Peer(peerId, { debug: 0 });
+          hostPeerJs = new Peer('neon-arena-room-' + activeRoomCode, { debug: 0 });
           hostPeerJs.on('open', () => {
-            if (statusEl) statusEl.textContent = 'Live P2P Room ' + activeRoomCode + ' ready for phones!';
+            statusEl.textContent = 'Room ' + activeRoomCode + ' live — scan QR or enter code on phones!';
           });
           hostPeerJs.on('connection', (conn) => {
-            const pid = 'pjs-' + (conn.peer ? conn.peer.slice(-4) : Math.floor(1000 + Math.random() * 9000));
-            conn.on('open', () => {
-              hostPeerJsConns.set(pid, conn);
-              showToast('Phone joined room ' + activeRoomCode + '!');
-              closePairModal();
-            });
+            const pid = 'pjs-' + (conn.peer ? conn.peer.slice(-5) : Math.floor(1000 + Math.random() * 9000));
             conn.on('data', (data) => {
               try {
                 const msg = typeof data === 'string' ? JSON.parse(data) : data;
-                if (msg && msg.type === 'input') {
-                  msg.id = pid;
-                  msg.source = 'peerjs';
-                  applyRemoteInput(msg);
-                }
+                applyRemotePacket(pid, msg, 'peerjs', conn);
               } catch (_) {}
             });
             conn.on('close', () => {
-              hostPeerJsConns.delete(pid);
+              state.roomPhones.delete(pid);
               state.players.delete(pid);
+              renderLobbyPlayers();
               renderHud();
-              showToast('A phone left the room.');
+              showToast('A player left the room.');
             });
           });
           hostPeerJs.on('error', () => {
-            if (statusEl) statusEl.textContent = 'Room ' + activeRoomCode + ' active (use Manual WebRTC or host file for cross-device P2P)';
+            statusEl.textContent = 'Room ' + activeRoomCode + ' ready (host file online for cross-device QR)';
           });
         } catch (_) {
-          if (statusEl) statusEl.textContent = 'Room ' + activeRoomCode + ' ready locally';
+          statusEl.textContent = 'Room ' + activeRoomCode + ' ready';
         }
       }
 
-      function joinRoomByCode(rawCode) {
+      function joinRoomAsPhone(rawCode) {
         const clean = String(rawCode || '').replace(/\D/g, '').slice(0, 4);
-        const statusEl = document.getElementById('joinCodeStatus');
         if (clean.length !== 4) {
-          showToast('Enter a valid 4-digit room code.');
-          if (statusEl) statusEl.textContent = 'Please enter all 4 digits.';
+          showToast('Enter all 4 digits of the room code.');
           return;
         }
+        AudioFX.unlock();
+        activeRoomCode = clean;
+        myPhoneProfile.name = (document.getElementById('joinNameInput').value || 'Player').trim().slice(0, 12) || 'Player';
+        document.getElementById('padNameInput').value = myPhoneProfile.name;
+        document.getElementById('padConnPill').textContent = 'Room ' + clean;
 
-        // Always connect BroadcastChannel for same-browser 4-digit testing
-        initBroadcastChannel(clean);
+        initRoomBroadcast(clean);
         padState.transport = 'broadcast';
-        updatePadConnectionUI('Room ' + clean, 'indigo');
-        document.getElementById('padQuickJoinBar').classList.add('hidden');
         setScreen('pad');
+        sendPhoneProfile();
 
-        // Also attempt PeerJS WebRTC P2P connection to the TV Host room
         if (typeof Peer !== 'undefined') {
-          if (statusEl) statusEl.textContent = 'Connecting to room ' + clean + '...';
           try {
             if (padPeerJs) { try { padPeerJs.destroy(); } catch (_) {} }
             padPeerJs = new Peer(undefined, { debug: 0 });
@@ -1663,275 +1766,276 @@
               padPeerConn = conn;
               conn.on('open', () => {
                 padState.transport = 'peerjs';
-                updatePadConnectionUI('Room ' + clean + ' P2P', 'emerald');
-                showToast('Connected to TV Room ' + clean + '!');
-                closePairModal();
-                // Send an initial ping so TV immediately spawns this player
-                sendPadInput(false);
+                showToast('Connected to Room ' + clean + '!');
+                if (!isFullscreenActive()) {
+                  document.getElementById('padFsBanner').classList.remove('hidden');
+                }
+                sendPhoneProfile();
               });
               conn.on('data', (data) => {
                 try {
                   const d = typeof data === 'string' ? JSON.parse(data) : data;
-                  if (d && d.type === 'telemetry') {
-                    document.getElementById('padScoreText').textContent = String(d.score);
-                    document.getElementById('padEnergyText').textContent = d.energy + '%';
-                    if (d.label) document.getElementById('padPlayerLabel').textContent = d.label;
-                  }
+                  if (d && d.type === 'telemetry') updatePhoneTelemetryUI(d);
                 } catch (_) {}
               });
               conn.on('close', () => {
                 padState.transport = 'broadcast';
-                updatePadConnectionUI('Disconnected', 'sky');
-                document.getElementById('padQuickJoinBar').classList.remove('hidden');
-                showToast('Disconnected from TV Room.');
+                showToast('Disconnected from host room.');
               });
-            });
-            padPeerJs.on('error', () => {
-              if (statusEl) statusEl.textContent = 'Linked to Room ' + clean + ' via Tab Link.';
             });
           } catch (_) {}
         }
-
-        closePairModal();
-        showToast('Joined Room ' + clean + '!');
-        sendPadInput(false);
-      }
-
-      function applyRemoteInput(msg) {
-        if (!msg || msg.type !== 'input') return;
-        const pid = msg.id || 'remote-1';
-        let player = state.players.get(pid);
-        if (!player) {
-          const num = Array.from(state.players.values()).filter((p) => !p.isBot).length + 1;
-          player = createPlayer(pid, 'Phone P' + num, msg.colorIdx != null ? msg.colorIdx : state.players.size, false, msg.source || 'webrtc');
-          state.players.set(pid, player);
-          renderHud();
-          showToast(player.label + ' joined!');
+        if (!isFullscreenActive()) {
+          document.getElementById('padFsBanner').classList.remove('hidden');
         }
-        if (state.screen !== 'playing' || state.paused || state.gameOver) return;
-        player.inputX = Math.max(-1, Math.min(1, Number(msg.x) || 0));
-        player.inputY = Math.max(-1, Math.min(1, Number(msg.y) || 0));
-        player.boosting = Boolean(msg.boost);
-        player.firing = Boolean(msg.fire);
-        if (msg.pulse) player.pulseTrigger = true;
+        showToast('Joined Room ' + clean + '!');
       }
 
       let lastTelemetryPush = 0;
       function broadcastTelemetryToRemotes() {
         const now = performance.now();
-        if (now - lastTelemetryPush < 220) return;
+        if (now - lastTelemetryPush < 180) return;
         lastTelemetryPush = now;
 
-        hostRemotePeers.forEach((peer, pid) => {
+        state.roomPhones.forEach((ph, pid) => {
           const p = state.players.get(pid);
-          if (p && peer.dc && peer.dc.readyState === 'open') {
-            try { peer.dc.send(JSON.stringify({ type: 'telemetry', score: p.score, energy: Math.round(p.energy), label: p.label })); } catch (_) {}
+          if (!p) return;
+          const activePw = p.shieldTimer > 0 ? '🛡️ SHIELD' : (p.rapidTimer > 0 ? '🔥 RAPID' : (p.overdriveTimer > 0 ? '⚡ OVERDRIVE' : ''));
+          const pkt = { type: 'telemetry', id: pid, hp: Math.round(p.hp), energy: Math.round(p.energy), score: p.score, powerup: activePw };
+          if (ph.source === 'peerjs' && ph.conn && ph.conn.open) {
+            try { ph.conn.send(pkt); } catch (_) {}
+          } else if (ph.source === 'broadcast' && bcChannel) {
+            try { bcChannel.postMessage(pkt); } catch (_) {}
           }
         });
+      }
 
-        hostPeerJsConns.forEach((conn, pid) => {
-          const p = state.players.get(pid);
-          if (p && conn && conn.open) {
-            try { conn.send({ type: 'telemetry', score: p.score, energy: Math.round(p.energy), label: p.label }); } catch (_) {}
+      function updatePhoneTelemetryUI(d) {
+        document.getElementById('padHpText').textContent = String(d.hp);
+        document.getElementById('padHpBar').style.width = Math.max(0, Math.min(100, d.hp)) + '%';
+        document.getElementById('padEnergyBar').style.width = Math.max(0, Math.min(100, d.energy)) + '%';
+        document.getElementById('padScoreText').textContent = String(d.score);
+        document.getElementById('padPowerupBadge').textContent = d.powerup || '';
+      }
+
+      // ============================================================
+      // 6. VIRTUAL CONTROLLER INPUT (Phone Pad + Solo Touch Overlay)
+      // ============================================================
+      const padState = {
+        dragging: false,
+        pointerId: null,
+        x: 0,
+        y: 0,
+        boosting: false,
+        firing: false,
+        transport: 'local'
+      };
+
+      function sendPhoneProfile() {
+        const pkt = { type: 'profile', id: myPhoneProfile.id, name: myPhoneProfile.name, colorIdx: myPhoneProfile.colorIdx };
+        if (padState.transport === 'peerjs' && padPeerConn && padPeerConn.open) {
+          try { padPeerConn.send(pkt); } catch (_) {}
+        } else if (bcChannel) {
+          try { bcChannel.postMessage(pkt); } catch (_) {}
+        }
+      }
+
+      function sendPadInput(pulseNow) {
+        const pkt = {
+          type: 'input',
+          id: myPhoneProfile.id,
+          name: myPhoneProfile.name,
+          colorIdx: myPhoneProfile.colorIdx,
+          x: Number(padState.x.toFixed(3)),
+          y: Number(padState.y.toFixed(3)),
+          boost: padState.boosting,
+          fire: padState.firing,
+          pulse: Boolean(pulseNow)
+        };
+
+        if (state.screen === 'playing' && state.playMode === 'solo') {
+          const p1 = state.players.get('local-p1');
+          if (p1 && !state.paused && !state.gameOver) {
+            p1.inputX = pkt.x;
+            p1.inputY = pkt.y;
+            p1.boosting = pkt.boost;
+            p1.firing = pkt.fire;
+            if (pkt.pulse) p1.pulseTrigger = true;
           }
-        });
+        } else if (state.screen === 'pad') {
+          if (padState.transport === 'peerjs' && padPeerConn && padPeerConn.open) {
+            try { padPeerConn.send(pkt); } catch (_) {}
+          } else if (bcChannel) {
+            try { bcChannel.postMessage(pkt); } catch (_) {}
+          }
+        }
+      }
 
-        if (bcChannel) {
-          state.players.forEach((p) => {
-            if (p.source === 'broadcast') {
-              try { bcChannel.postMessage({ type: 'telemetry', id: p.id, score: p.score, energy: Math.round(p.energy), label: p.label }); } catch (_) {}
+      function bindJoystick(baseEl, knobEl) {
+        function moveStick(clientX, clientY) {
+          const rect = baseEl.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const maxDist = rect.width * 0.34;
+          let dx = clientX - cx;
+          let dy = clientY - cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
+          knobEl.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px)';
+          padState.x = dx / maxDist;
+          padState.y = dy / maxDist;
+          sendPadInput(false);
+        }
+        function releaseStick(e) {
+          if (!padState.dragging) return;
+          if (e && padState.pointerId !== null && e.pointerId !== padState.pointerId) return;
+          padState.dragging = false; padState.pointerId = null;
+          padState.x = 0; padState.y = 0;
+          knobEl.style.transform = 'translate(0px, 0px)';
+          sendPadInput(false);
+        }
+        baseEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock(); e.preventDefault();
+          padState.dragging = true; padState.pointerId = e.pointerId;
+          try { baseEl.setPointerCapture(e.pointerId); } catch (_) {}
+          moveStick(e.clientX, e.clientY);
+        });
+        baseEl.addEventListener('pointermove', (e) => {
+          if (!padState.dragging || e.pointerId !== padState.pointerId) return;
+          e.preventDefault(); moveStick(e.clientX, e.clientY);
+        });
+        baseEl.addEventListener('pointerup', releaseStick);
+        baseEl.addEventListener('pointercancel', releaseStick);
+      }
+
+      function bindActionButtons(boostEl, pulseEl, fireEl) {
+        boostEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock(); e.preventDefault();
+          padState.boosting = true; boostEl.classList.add('pressed');
+          vibratePhone(16); AudioFX.boost(); sendPadInput(false);
+        });
+        const stopBoost = () => { padState.boosting = false; boostEl.classList.remove('pressed'); sendPadInput(false); };
+        boostEl.addEventListener('pointerup', stopBoost);
+        boostEl.addEventListener('pointercancel', stopBoost);
+        boostEl.addEventListener('pointerleave', stopBoost);
+
+        pulseEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock(); e.preventDefault();
+          pulseEl.classList.add('pressed'); vibratePhone(32); sendPadInput(true);
+        });
+        const stopPulse = () => pulseEl.classList.remove('pressed');
+        pulseEl.addEventListener('pointerup', stopPulse);
+        pulseEl.addEventListener('pointercancel', stopPulse);
+
+        fireEl.addEventListener('pointerdown', (e) => {
+          AudioFX.unlock(); e.preventDefault();
+          padState.firing = true; fireEl.classList.add('pressed');
+          vibratePhone(14); sendPadInput(false);
+        });
+        const stopFire = () => { padState.firing = false; fireEl.classList.remove('pressed'); sendPadInput(false); };
+        fireEl.addEventListener('pointerup', stopFire);
+        fireEl.addEventListener('pointercancel', stopFire);
+        fireEl.addEventListener('pointerleave', stopFire);
+      }
+
+      bindJoystick(document.getElementById('soloJoyBase'), document.getElementById('soloJoyKnob'));
+      bindActionButtons(document.getElementById('soloBoostBtn'), document.getElementById('soloPulseBtn'), document.getElementById('soloFireBtn'));
+      bindJoystick(document.getElementById('fullJoyBase'), document.getElementById('fullJoyKnob'));
+      bindActionButtons(document.getElementById('fullBoostBtn'), document.getElementById('fullPulseBtn'), document.getElementById('fullFireBtn'));
+
+      // ============================================================
+      // 7. COLOR SWATCHES, ROOM SETTINGS & BUTTON WIRING
+      // ============================================================
+      function renderColorSwatches() {
+        const pal = PLAYER_PALETTE[myPhoneProfile.colorIdx % PLAYER_PALETTE.length];
+        const dot = document.getElementById('padColorDot');
+        if (dot) { dot.style.backgroundColor = pal.hex; dot.style.boxShadow = '0 0 10px ' + pal.hex; }
+
+        ['joinColorSwatches', 'padColorSwatches'].forEach((containerId) => {
+          const el = document.getElementById(containerId);
+          if (!el) return;
+          el.innerHTML = PLAYER_PALETTE.map((c, idx) => {
+            const active = idx === myPhoneProfile.colorIdx;
+            return '<button type="button" data-color-idx="' + idx + '" class="' +
+              (containerId === 'padColorSwatches' ? 'w-7 h-7' : 'w-9 h-9') +
+              ' rounded-full transition transform ' + (active ? 'scale-110 ring-2 ring-white' : 'opacity-75 hover:opacity-100') +
+              '" style="background:' + c.hex + ';box-shadow:0 0 10px ' + c.hex + '" title="' + c.name + '"></button>';
+          }).join('');
+          el.querySelectorAll('button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              myPhoneProfile.colorIdx = Number(btn.getAttribute('data-color-idx'));
+              renderColorSwatches();
+              sendPhoneProfile();
+            });
+          });
+        });
+      }
+
+      function syncLobbySettingsUI() {
+        const d = state.settings.duration;
+        document.getElementById('setTime60').className = 'flex-1 py-1.5 rounded-lg font-extrabold transition ' + (d === 60 ? 'bg-sky-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white');
+        document.getElementById('setTime120').className = 'flex-1 py-1.5 rounded-lg font-extrabold transition ' + (d === 120 ? 'bg-sky-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white');
+        document.getElementById('setTimeInf').className = 'flex-1 py-1.5 rounded-lg font-extrabold transition ' + (d === 0 ? 'bg-sky-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white');
+        document.getElementById('setBotLabel').textContent = state.settings.botCount === 1 ? '1 Bot' : (state.settings.botCount + ' Bots');
+        document.getElementById('setWallsStatus').textContent = state.settings.walls ? 'ON' : 'OFF';
+        document.getElementById('setPowerupsStatus').textContent = state.settings.powerups ? 'ON' : 'OFF';
+      }
+
+      function isFullscreenActive() {
+        return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      }
+
+      function syncFullscreenUI() {
+        const active = isFullscreenActive();
+        document.querySelectorAll('[data-fs-icon]').forEach((el) => {
+          el.textContent = active ? '⤢' : '⛶';
+        });
+        document.querySelectorAll('[data-fs-label]').forEach((el) => {
+          el.textContent = active ? 'Exit Full' : 'Fullscreen';
+        });
+        if (active) {
+          document.getElementById('padFsBanner').classList.add('hidden');
+          const lfs = document.getElementById('lobbyFullscreenBtn');
+          if (lfs) lfs.classList.remove('animate-pulse');
+        }
+        requestAnimationFrame(resizeCanvas);
+      }
+
+      function toggleFullscreen() {
+        AudioFX.unlock();
+        const docEl = document.documentElement;
+        try {
+          if (!isFullscreenActive()) {
+            const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+            if (!req) {
+              showToast('Fullscreen is not supported on this browser.');
+              return;
             }
-          });
-        }
-      }
-
-      function waitForIceGathering(pc, timeoutMs) {
-        return new Promise((resolve) => {
-          if (pc.iceGatheringState === 'complete') { resolve(); return; }
-          const timer = setTimeout(resolve, timeoutMs || 2200);
-          pc.addEventListener('icegatheringstatechange', () => {
-            if (pc.iceGatheringState === 'complete') { clearTimeout(timer); resolve(); }
-          });
-        });
-      }
-
-      function encodeSignal(desc) {
-        return btoa(unescape(encodeURIComponent(JSON.stringify({ type: desc.type, sdp: desc.sdp }))));
-      }
-      function decodeSignal(code) {
-        return JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
-      }
-
-      document.getElementById('hostCreateOfferBtn').addEventListener('click', async () => {
-        AudioFX.unlock();
-        const statusEl = document.getElementById('hostOfferStatus');
-        const outEl = document.getElementById('hostOfferOutput');
-        if (typeof RTCPeerConnection === 'undefined') { statusEl.textContent = 'WebRTC unsupported in this browser.'; return; }
-        statusEl.textContent = 'Gathering P2P candidates...';
-        outEl.value = '';
-        try {
-          if (pendingHostPC) { try { pendingHostPC.close(); } catch (_) {} }
-          const pc = new RTCPeerConnection(ICE_CONFIG);
-          const pid = 'rtc-' + Math.floor(1000 + Math.random() * 9000);
-          const dc = pc.createDataChannel('airpad', { ordered: false, maxRetransmits: 0 });
-          dc.onopen = () => {
-            hostRemotePeers.set(pid, { pc, dc });
-            statusEl.textContent = 'Phone connected directly via WebRTC!';
-            showToast('Phone controller connected!');
-            closePairModal();
-          };
-          dc.onmessage = (ev) => {
-            try { const d = JSON.parse(ev.data); d.id = pid; d.source = 'webrtc'; applyRemoteInput(d); } catch (_) {}
-          };
-          dc.onclose = () => {
-            hostRemotePeers.delete(pid);
-            state.players.delete(pid);
-            renderHud();
-            showToast('Phone controller disconnected.');
-          };
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          await waitForIceGathering(pc, 2200);
-          pendingHostPC = pc;
-          outEl.value = encodeSignal(pc.localDescription);
-          statusEl.textContent = 'Offer ready! Copy and paste into Phone Pad.';
-        } catch (err) {
-          statusEl.textContent = 'Error: ' + (err.message || err);
-        }
-      });
-
-      document.getElementById('hostCopyOfferBtn').addEventListener('click', () => {
-        copyText(document.getElementById('hostOfferOutput').value, 'Offer code copied!');
-      });
-
-      document.getElementById('hostAcceptAnswerBtn').addEventListener('click', async () => {
-        const statusEl = document.getElementById('hostOfferStatus');
-        const raw = document.getElementById('hostAnswerInput').value;
-        if (!pendingHostPC) { showToast('Generate an Offer Code first.'); return; }
-        if (!raw.trim()) { showToast('Paste the Phone Reply Code first.'); return; }
-        try {
-          await pendingHostPC.setRemoteDescription(new RTCSessionDescription(decodeSignal(raw)));
-          statusEl.textContent = 'Linking with phone over P2P...';
-          showToast('Linking phone...');
-        } catch (_) {
-          statusEl.textContent = 'Invalid Reply Code.';
-          showToast('Invalid Reply Code.');
-        }
-      });
-
-      document.getElementById('padCreateAnswerBtn').addEventListener('click', async () => {
-        AudioFX.unlock();
-        const statusEl = document.getElementById('padRtcStatus');
-        const raw = document.getElementById('padOfferInput').value;
-        const outEl = document.getElementById('padAnswerOutput');
-        if (!raw.trim()) { showToast('Paste the TV Offer Code first.'); return; }
-        statusEl.textContent = 'Generating Reply Code...';
-        outEl.value = '';
-        try {
-          if (padRtcPC) { try { padRtcPC.close(); } catch (_) {} }
-          const pc = new RTCPeerConnection(ICE_CONFIG);
-          pc.ondatachannel = (ev) => {
-            padRtcChannel = ev.channel;
-            padRtcChannel.onopen = () => {
-              padState.transport = 'webrtc';
-              updatePadConnectionUI('WebRTC P2P', 'emerald');
-              showToast('Connected to TV Screen!');
-              closePairModal();
-              setScreen('pad');
-            };
-            padRtcChannel.onmessage = (msgEv) => {
-              try {
-                const d = JSON.parse(msgEv.data);
-                if (d.type === 'telemetry') {
-                  document.getElementById('padScoreText').textContent = String(d.score);
-                  document.getElementById('padEnergyText').textContent = d.energy + '%';
-                  if (d.label) document.getElementById('padPlayerLabel').textContent = d.label;
+            const res = req.call(docEl);
+            if (res && typeof res.then === 'function') {
+              res.then(() => {
+                syncFullscreenUI();
+                if (state.screen === 'pad' && screen.orientation && screen.orientation.lock) {
+                  screen.orientation.lock('landscape').catch(() => {});
                 }
-              } catch (_) {}
-            };
-            padRtcChannel.onclose = () => {
-              padState.transport = 'local';
-              updatePadConnectionUI('Disconnected', 'sky');
-              showToast('Disconnected from TV.');
-            };
-          };
-          await pc.setRemoteDescription(new RTCSessionDescription(decodeSignal(raw)));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await waitForIceGathering(pc, 2200);
-          padRtcPC = pc;
-          outEl.value = encodeSignal(pc.localDescription);
-          statusEl.textContent = 'Reply ready! Copy and paste it back into the TV.';
-        } catch (_) {
-          statusEl.textContent = 'Invalid Offer Code.';
-          showToast('Invalid Offer Code.');
-        }
-      });
-
-      document.getElementById('padCopyAnswerBtn').addEventListener('click', () => {
-        copyText(document.getElementById('padAnswerOutput').value, 'Reply code copied!');
-      });
-
-      function initBroadcastChannel(roomCode) {
-        try {
-          if (typeof BroadcastChannel === 'undefined') return;
-          if (bcChannel) { try { bcChannel.close(); } catch (_) {} }
-          const chName = roomCode ? ('airpad_room_' + roomCode) : 'airpad_serverless_v1';
-          bcChannel = new BroadcastChannel(chName);
-          bcChannel.onmessage = (ev) => {
-            const msg = ev.data;
-            if (!msg) return;
-            if (msg.type === 'input' && state.screen !== 'pad') {
-              msg.source = 'broadcast';
-              applyRemoteInput(msg);
-            } else if (msg.type === 'telemetry' && padState.transport === 'broadcast' && msg.id === padState.remoteId) {
-              document.getElementById('padScoreText').textContent = String(msg.score);
-              document.getElementById('padEnergyText').textContent = msg.energy + '%';
-              if (msg.label) document.getElementById('padPlayerLabel').textContent = msg.label;
+              }).catch(() => {
+                showToast('Fullscreen blocked in preview — works when opened directly!');
+              });
             }
-          };
-        } catch (_) {}
-      }
-
-      document.getElementById('connectBroadcastBtn').addEventListener('click', () => {
-        if (!bcChannel) { showToast('BroadcastChannel not supported.'); return; }
-        padState.transport = 'broadcast';
-        updatePadConnectionUI('Tab Link', 'indigo');
-        showToast('Linked via BroadcastChannel!');
-        closePairModal();
-        setScreen('pad');
-      });
-
-      function updatePadConnectionUI(label, color) {
-        const pill = document.getElementById('padConnPill');
-        document.getElementById('padTransportLabel').textContent = label;
-        pill.textContent = label;
-        pill.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold ' +
-          (color === 'emerald' ? 'bg-emerald-500/20 text-emerald-300' :
-           color === 'indigo' ? 'bg-indigo-500/20 text-indigo-300' :
-           'bg-sky-500/20 text-sky-300');
-      }
-
-      // ============================================================
-      // 6. UI EVENTS, COLOR PICKER, MODALS & KEYBOARD
-      // ============================================================
-      function cyclePlayerColor() {
-        state.localColorIdx = (state.localColorIdx + 1) % PLAYER_PALETTE.length;
-        const pal = PLAYER_PALETTE[state.localColorIdx];
-        [document.getElementById('menuColorDot'), document.getElementById('padColorDot')].forEach((dot) => {
-          if (dot) {
-            dot.style.backgroundColor = pal.hex;
-            dot.style.boxShadow = '0 0 10px ' + pal.hex;
+          } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) {
+              const res = exit.call(document);
+              if (res && typeof res.then === 'function') res.then(syncFullscreenUI).catch(() => {});
+            }
           }
-        });
-        const p1 = state.players.get('local-p1');
-        if (p1) {
-          p1.colorIdx = state.localColorIdx;
-          p1.color = pal.hex;
-          p1.glow = pal.glow;
+        } catch (_) {
+          showToast('Fullscreen unavailable in this view.');
         }
-        renderHud();
       }
+
+      document.addEventListener('fullscreenchange', syncFullscreenUI);
+      document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
 
       function toggleSound() {
         AudioFX.unlock();
@@ -1942,58 +2046,79 @@
         showToast(AudioFX.muted ? 'Sound muted' : 'Sound on');
       }
 
-      function syncMenuSettingsUI() {
-        const m60 = document.getElementById('menuMode60Btn');
-        const mEnd = document.getElementById('menuModeEndlessBtn');
-        m60.className = 'px-2.5 py-1.5 rounded-lg font-extrabold transition ' + (!state.endless ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
-        mEnd.className = 'px-2.5 py-1.5 rounded-lg font-extrabold transition ' + (state.endless ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
-        document.getElementById('menuBotCountLabel').textContent = String(state.menuBotCount);
-      }
-
-      function setPairTab(tab) {
-        const map = {
-          qr: [document.getElementById('tabQrRoom'), document.getElementById('paneQrRoom')],
-          host: [document.getElementById('tabWebRTCHost'), document.getElementById('paneWebRTCHost')],
-          pad: [document.getElementById('tabWebRTCPad'), document.getElementById('paneWebRTCPad')],
-          bc: [document.getElementById('tabBroadcast'), document.getElementById('paneBroadcast')]
-        };
-        Object.entries(map).forEach(([k, [btn, pane]]) => {
-          btn.className = 'py-2 px-2 rounded-lg text-xs font-bold transition ' + (k === tab ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
-          pane.classList.toggle('hidden', k !== tab);
-        });
-      }
-
-      function openPairModal(defaultTab) {
-        setPairTab(defaultTab || 'qr');
-        document.getElementById('pairModal').classList.remove('hidden');
-      }
-      function closePairModal() {
-        document.getElementById('pairModal').classList.add('hidden');
-      }
-
       // Title screen actions
-      document.getElementById('playNowBtn').addEventListener('click', () => startMatch(true));
-      document.getElementById('startHostBtn').addEventListener('click', () => startMatch(false));
-      document.getElementById('joinPhoneBtn').addEventListener('click', () => {
+      document.getElementById('btnCreateRoom').addEventListener('click', () => {
         AudioFX.unlock();
-        setScreen('pad');
+        openHostRoom(generateRoomCode());
+        syncLobbySettingsUI();
+        setScreen('lobby');
       });
-      document.getElementById('titlePairBtn').addEventListener('click', () => openPairModal('qr'));
+      document.getElementById('btnJoinRoom').addEventListener('click', () => {
+        AudioFX.unlock();
+        document.getElementById('joinNameInput').value = myPhoneProfile.name;
+        renderColorSwatches();
+        setScreen('join');
+      });
+      document.getElementById('btnSoloPlay').addEventListener('click', startSoloMatch);
       document.getElementById('titleSoundBtn').addEventListener('click', toggleSound);
-      document.getElementById('titleGuideBtn').addEventListener('click', () => document.getElementById('guideModal').classList.remove('hidden'));
-      document.getElementById('menuMode60Btn').addEventListener('click', () => { state.endless = false; syncMenuSettingsUI(); });
-      document.getElementById('menuModeEndlessBtn').addEventListener('click', () => { state.endless = true; syncMenuSettingsUI(); });
-      document.getElementById('menuBotDecBtn').addEventListener('click', () => { state.menuBotCount = Math.max(0, state.menuBotCount - 1); syncMenuSettingsUI(); });
-      document.getElementById('menuBotIncBtn').addEventListener('click', () => { state.menuBotCount = Math.min(4, state.menuBotCount + 1); syncMenuSettingsUI(); });
-      document.getElementById('menuColorBtn').addEventListener('click', cyclePlayerColor);
-
-      // In-game floating HUD actions
-      document.getElementById('hudTogglePadBtn').addEventListener('click', () => {
-        state.showTouchOverlay = !state.showTouchOverlay;
-        document.getElementById('touchOverlay').classList.toggle('hidden', !state.showTouchOverlay);
-        showToast(state.showTouchOverlay ? 'On-screen controller shown' : 'On-screen controller hidden');
+      document.getElementById('titleFullscreenBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('lobbyFullscreenBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('hudFullscreenBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('padFullscreenBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('padFsBannerBtn').addEventListener('click', toggleFullscreen);
+      document.getElementById('padFsBannerDismiss').addEventListener('click', () => {
+        document.getElementById('padFsBanner').classList.add('hidden');
       });
-      document.getElementById('hudPairBtn').addEventListener('click', () => openPairModal('qr'));
+
+      // Lobby actions
+      document.getElementById('lobbyBackBtn').addEventListener('click', () => {
+        if (hostPeerJs) { try { hostPeerJs.destroy(); } catch (_) {} hostPeerJs = null; }
+        initAttractScene();
+        setScreen('title');
+      });
+      document.getElementById('lobbyRegenBtn').addEventListener('click', () => {
+        openHostRoom(generateRoomCode());
+        showToast('New Room Code: ' + activeRoomCode);
+      });
+      document.getElementById('lobbyCopyLinkBtn').addEventListener('click', () => {
+        copyText(getJoinUrl(activeRoomCode), 'Join link copied (Room ' + activeRoomCode + ')!');
+      });
+      document.getElementById('setTime60').addEventListener('click', () => { state.settings.duration = 60; syncLobbySettingsUI(); });
+      document.getElementById('setTime120').addEventListener('click', () => { state.settings.duration = 120; syncLobbySettingsUI(); });
+      document.getElementById('setTimeInf').addEventListener('click', () => { state.settings.duration = 0; syncLobbySettingsUI(); });
+      document.getElementById('setBotDec').addEventListener('click', () => { state.settings.botCount = Math.max(0, state.settings.botCount - 1); syncLobbySettingsUI(); });
+      document.getElementById('setBotInc').addEventListener('click', () => { state.settings.botCount = Math.min(4, state.settings.botCount + 1); syncLobbySettingsUI(); });
+      document.getElementById('setWallsToggle').addEventListener('click', () => { state.settings.walls = !state.settings.walls; syncLobbySettingsUI(); });
+      document.getElementById('setPowerupsToggle').addEventListener('click', () => { state.settings.powerups = !state.settings.powerups; syncLobbySettingsUI(); });
+      document.getElementById('lobbyStartBtn').addEventListener('click', startRoomMatch);
+
+      // Join screen actions
+      document.getElementById('joinBackBtn').addEventListener('click', () => setScreen('title'));
+      document.getElementById('joinSubmitBtn').addEventListener('click', () => joinRoomAsPhone(document.getElementById('joinCodeInput').value));
+      document.getElementById('joinCodeInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') joinRoomAsPhone(e.currentTarget.value);
+      });
+
+      // Phone Pad customization actions
+      document.getElementById('padBackBtn').addEventListener('click', () => {
+        if (padPeerJs) { try { padPeerJs.destroy(); } catch (_) {} padPeerJs = null; }
+        initAttractScene();
+        setScreen('title');
+      });
+      document.getElementById('padNameInput').addEventListener('input', (e) => {
+        myPhoneProfile.name = e.currentTarget.value.trim().slice(0, 12) || 'Player';
+        sendPhoneProfile();
+      });
+
+      // In-game HUD actions
+      document.getElementById('hudRoomPill').addEventListener('click', () => document.getElementById('quickQrModal').classList.remove('hidden'));
+      document.getElementById('closeQuickQrBtn').addEventListener('click', () => document.getElementById('quickQrModal').classList.add('hidden'));
+      document.getElementById('quickQrCopyBtn').addEventListener('click', () => copyText(getJoinUrl(activeRoomCode), 'Join link copied!'));
+
+      document.getElementById('hudTogglePadBtn').addEventListener('click', () => {
+        state.showSoloTouch = !state.showSoloTouch;
+        document.getElementById('soloTouchOverlay').classList.toggle('hidden', !state.showSoloTouch);
+      });
       document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);
       document.getElementById('hudPauseBtn').addEventListener('click', () => {
         if (state.gameOver) return;
@@ -2002,55 +2127,33 @@
         else document.getElementById('gameOverlay').classList.add('hidden');
       });
 
-      // Overlay actions
+      // Pause / Game Over actions
       document.getElementById('overlayPrimaryBtn').addEventListener('click', () => {
         AudioFX.unlock();
         if (state.gameOver) {
-          startMatch(state.showTouchOverlay);
+          if (state.playMode === 'room') startRoomMatch();
+          else startSoloMatch();
         } else {
           state.paused = false;
           document.getElementById('gameOverlay').classList.add('hidden');
         }
       });
-      document.getElementById('overlayRestartBtn').addEventListener('click', () => startMatch(state.showTouchOverlay));
-      document.getElementById('overlayMenuBtn').addEventListener('click', () => setScreen('title'));
+      document.getElementById('overlayRestartBtn').addEventListener('click', () => {
+        if (state.playMode === 'room') startRoomMatch();
+        else startSoloMatch();
+      });
+      document.getElementById('overlayExitBtn').addEventListener('click', () => {
+        if (state.playMode === 'room') {
+          setScreen('lobby');
+        } else {
+          initAttractScene();
+          setScreen('title');
+        }
+      });
 
-      // Phone pad screen actions
-      document.getElementById('padBackToTitleBtn').addEventListener('click', () => setScreen('title'));
-      document.getElementById('padSwitchColorBtn').addEventListener('click', cyclePlayerColor);
-      document.getElementById('padOpenPairBtn').addEventListener('click', () => openPairModal('qr'));
-
-      // Pairing & Guide modals
-      document.getElementById('closePairModalBtn').addEventListener('click', closePairModal);
-      document.getElementById('tabQrRoom').addEventListener('click', () => setPairTab('qr'));
-      document.getElementById('tabWebRTCHost').addEventListener('click', () => setPairTab('host'));
-      document.getElementById('copyRoomLinkBtn').addEventListener('click', () => {
-        copyText(getJoinUrl(activeRoomCode), 'Join link copied (Room ' + activeRoomCode + ')!');
-      });
-      document.getElementById('regenRoomCodeBtn').addEventListener('click', () => {
-        setupHostRoom(generateRoomCode());
-        showToast('New Room Code: ' + activeRoomCode);
-      });
-      document.getElementById('joinCodeSubmitBtn').addEventListener('click', () => {
-        joinRoomByCode(document.getElementById('joinCodeInput').value);
-      });
-      document.getElementById('joinCodeInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') joinRoomByCode(e.currentTarget.value);
-      });
-      document.getElementById('padQuickJoinBtn').addEventListener('click', () => {
-        joinRoomByCode(document.getElementById('padQuickCodeInput').value);
-      });
-      document.getElementById('padQuickCodeInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') joinRoomByCode(e.currentTarget.value);
-      });
-      document.getElementById('tabWebRTCPad').addEventListener('click', () => setPairTab('pad'));
-      document.getElementById('tabBroadcast').addEventListener('click', () => setPairTab('bc'));
-      document.getElementById('closeGuideModalBtn').addEventListener('click', () => document.getElementById('guideModal').classList.add('hidden'));
-      document.getElementById('closeGuideBottomBtn').addEventListener('click', () => document.getElementById('guideModal').classList.add('hidden'));
-
-      // Keyboard controls
+      // Keyboard controls (Solo Play + Escape Pause)
       window.addEventListener('keydown', (e) => {
-        if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
         AudioFX.unlock();
         const k = e.key.toLowerCase();
         if (k === 'escape' && state.screen === 'playing' && !state.gameOver) {
@@ -2082,18 +2185,17 @@
 
       window.onload = function () {
         resizeCanvas();
-        initGame();
-        syncMenuSettingsUI();
-        setupHostRoom(generateRoomCode());
+        initAttractScene();
+        renderColorSwatches();
+        syncLobbySettingsUI();
 
-        // Auto-join as Phone Controller when opened via QR code (?room=XXXX)
+        // Auto-join if opened by scanning QR code (?room=XXXX)
         try {
           const params = new URLSearchParams(window.location.search);
           const qrRoom = params.get('room');
           if (qrRoom && /^\d{4}$/.test(qrRoom)) {
             document.getElementById('joinCodeInput').value = qrRoom;
-            document.getElementById('padQuickCodeInput').value = qrRoom;
-            joinRoomByCode(qrRoom);
+            joinRoomAsPhone(qrRoom);
           } else {
             setScreen('title');
           }
