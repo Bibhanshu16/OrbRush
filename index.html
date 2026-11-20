@@ -21,14 +21,16 @@ h1{font-size:clamp(40px,9vw,64px);font-weight:900;margin:0;line-height:1;text-sh
 h1 span{background:linear-gradient(90deg,#38bdf8,#e879f9);-webkit-background-clip:text;background-clip:text;color:transparent}
 .tl{font-size:11px;font-weight:900;letter-spacing:.3em;color:#38bdf8}
 .sub{font-size:12px;color:#94a3b8;margin:0}
-.btn{border:0;border-radius:14px;padding:13px 18px;font:900 15px Inter,sans-serif;color:#050811;background:linear-gradient(90deg,#38bdf8,#818cf8);cursor:pointer;width:100%;transition:transform .1s,filter .12s}
+.btn{border:0;border-radius:14px;padding:13px 18px;font:900 15px Inter,sans-serif;color:#050811;background:linear-gradient(90deg,#38bdf8,#818cf8);cursor:pointer;width:100%;transition:transform .1s,filter .12s,opacity .15s}
 .btn:hover{filter:brightness(1.1)}.btn:active{transform:scale(.96)}
 .btn.m{background:linear-gradient(90deg,#d946ef,#9333ea);color:#fff}
 .btn.g{background:linear-gradient(90deg,#34d399,#14b8a6)}
 .btn.s{background:#1e293b;color:#e2e8f0}
 .btn.sm{padding:8px 10px;font-size:12px}
+.btn.wait{opacity:.5;filter:grayscale(.4)}
 .ic,.chip,.pill{background:rgba(7,12,24,.8);border:1px solid rgba(148,163,184,.25);color:#e2e8f0;border-radius:12px;font:800 12px Inter,sans-serif;cursor:pointer}
 .ic{min-width:38px;height:38px;padding:0 8px}
+.ic.hl{background:#38bdf8;color:#050811;border-color:#38bdf8;box-shadow:0 0 18px rgba(56,189,248,.5)}
 .chip{padding:8px 10px}.chip.on{background:#38bdf8;color:#050811;border-color:#38bdf8}
 .pill{padding:6px 14px;font-size:18px;cursor:default;font-family:monospace;color:#38bdf8}
 .lbl{font-size:10px;font-weight:900;letter-spacing:.2em;color:#94a3b8;text-align:left}
@@ -51,6 +53,7 @@ input:focus{border-color:#e879f9}
 #feed div{background:rgba(7,12,24,.8);border-left:3px solid;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800}
 #pad{background:#070b15;justify-content:flex-start;backdrop-filter:none}
 #padTop{width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px}
+#fsBan{background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.4);border-radius:12px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#bae6fd}
 .bar{height:10px;border-radius:9px;background:#0f172a;overflow:hidden;border:1px solid #1e293b}.bar i{display:block;height:100%;width:100%;transition:width .15s}
 #vig{position:fixed;inset:0;z-index:36;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(239,68,68,.75);opacity:0;transition:opacity .25s}
 #ctl{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;justify-content:space-between;align-items:flex-end;padding:14px 18px max(18px,env(safe-area-inset-bottom));pointer-events:none}
@@ -71,18 +74,18 @@ input:focus{border-color:#e879f9}
 <div id="title" class="scr">
  <div class="tl">MULTIPLAYER ARCADE SHOOTER</div>
  <h1>NEON <span>ARENA</span></h1>
- <p class="sub">Create a room on screen, join with your phone</p>
+ <p class="sub">Create a room on screen · Every player connects their phone</p>
  <div class="col">
   <button class="btn" id="bCreate">＋ CREATE ROOM</button>
   <button class="btn m" id="bJoin">📱 JOIN ROOM</button>
-  <button class="btn s" id="bSolo">▶ SOLO PLAY</button>
+  <button class="btn s" id="bSolo">▶ SOLO PLAY (TOUCH PAD)</button>
  </div>
  <div class="row"><button class="ic" data-fs>⛶</button><button class="ic" data-snd>🔊</button></div>
- <p class="sub">WASD / arrows move · Space boost · F fire · E pulse</p>
+ <p class="sub">Phone virtual controller only · Scan QR or enter 4-digit code</p>
 </div>
 
 <div id="lobby" class="scr hidden"><div class="card wide">
- <div class="row sp"><button class="ic" id="lBack">◀</button><b>Room Lobby</b><button class="ic" data-fs>⛶</button></div>
+ <div class="row sp"><button class="ic" id="lBack">◀</button><b>Room Lobby</b><button class="ic" id="lFs" data-fs>⛶ Fullscreen</button></div>
  <p id="lStat" class="sub">Opening room...</p>
  <div class="lg">
   <div style="display:flex;flex-direction:column;gap:8px">
@@ -91,17 +94,18 @@ input:focus{border-color:#e879f9}
   </div>
   <div style="display:flex;flex-direction:column;gap:10px">
    <div class="lbl">PHONES JOINED: <span id="lCnt">0</span></div><div id="lList"></div>
-   <div class="lbl">SETTINGS</div>
+   <p class="sub" style="text-align:left">Everyone (including the host) must connect a phone to control their player.</p>
+   <div class="lbl">ROOM SETTINGS</div>
    <div class="row" style="justify-content:flex-start">
     <button class="chip" data-time="60">60s</button><button class="chip" data-time="120">120s</button><button class="chip" data-time="0">∞</button>
     <button class="chip" id="botD">−</button><span style="font-weight:900;font-size:12px">Bots <span id="botN">1</span></span><button class="chip" id="botI">+</button>
    </div>
    <div class="row" style="justify-content:flex-start">
-    <button class="chip" data-tg="walls">Walls <i></i></button><button class="chip" data-tg="pu">Power-ups <i></i></button><button class="chip" data-tg="host">Host plays <i></i></button>
+    <button class="chip" data-tg="walls">Walls <i></i></button><button class="chip" data-tg="pu">Power-ups <i></i></button>
    </div>
   </div>
  </div>
- <button class="btn g" id="lStart">▶ START MATCH</button>
+ <button class="btn g wait" id="lStart">📱 CONNECT AT LEAST 1 PHONE TO START</button>
 </div></div>
 
 <div id="join" class="scr hidden"><div class="card">
@@ -119,6 +123,10 @@ input:focus{border-color:#e879f9}
   <b id="pRoom" style="font-size:11px;color:#34d399">Room ----</b>
   <button class="ic" data-fs>⛶</button>
  </div>
+ <div id="fsBan" class="hidden">
+  <span>Connected! Tap for fullscreen gamepad</span>
+  <div class="row" style="flex-wrap:nowrap"><button class="btn sm" style="width:auto;padding:6px 10px" id="fsGo">⛶ Fullscreen</button><button class="ic" style="min-width:28px;height:28px" id="fsNo">✕</button></div>
+ </div>
  <div class="row" id="pSw"></div>
  <div class="row sp" style="font-size:11px;font-weight:900"><span style="color:#34d399">HP <span id="pHp">100</span></span><span id="pPu" style="color:#fbbf24"></span><span style="color:#38bdf8">SCORE <span id="pSc">0</span></span></div>
  <div class="bar"><i id="pHpB" style="background:linear-gradient(90deg,#34d399,#a3e635)"></i></div>
@@ -133,7 +141,7 @@ input:focus{border-color:#e879f9}
 
 <div id="hud" class="hidden">
  <div id="hPl"></div><div class="pill" id="hTm">60</div>
- <div class="row" style="flex-wrap:nowrap"><button class="ic hidden" id="hRoom">----</button><button class="ic" id="hCtl">🎮</button><button class="ic" data-fs>⛶</button><button class="ic" data-snd>🔊</button><button class="ic" id="hPause">⏸</button></div>
+ <div class="row" style="flex-wrap:nowrap"><button class="ic hidden" id="hRoom">----</button><button class="ic" data-fs>⛶</button><button class="ic" data-snd>🔊</button><button class="ic" id="hPause">⏸</button></div>
 </div>
 <div id="feed"></div>
 
@@ -157,13 +165,13 @@ const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const PAL=['#38bdf8','#34d399','#fbbf24','#fb7185','#a78bfa','#a3e635'];
 const PU=[{t:'shield',l:'SHIELD',i:'🛡️',c:'#38bdf8'},{t:'rapid',l:'RAPID FIRE',i:'🔥',c:'#fb7185'},{t:'heal',l:'+40 HP',i:'💚',c:'#34d399'},{t:'overdrive',l:'OVERDRIVE',i:'⚡',c:'#fbbf24'}];
 const cv=$('cv'),cx=cv.getContext('2d');
-const S={screen:'title',mode:'solo',paused:false,over:false,cd:0,showCtl:true,
- cfg:{time:60,bots:1,walls:true,pu:true,host:false},m:{dur:0,walls:true,pu:true},time:60,W:innerWidth,H:innerHeight,shake:0,
- players:new Map(),phones:new Map(),orbs:[],haz:[],walls:[],pus:[],bul:[],ft:[],par:[],rings:[],feed:[],puT:5,keys:{}};
+const S={screen:'title',mode:'solo',paused:false,over:false,cd:0,
+ cfg:{time:60,bots:1,walls:true,pu:true},m:{dur:0,walls:true,pu:true},time:60,W:innerWidth,H:innerHeight,shake:0,
+ players:new Map(),phones:new Map(),orbs:[],haz:[],walls:[],pus:[],bul:[],ft:[],par:[],rings:[],feed:[],puT:5};
 const me={id:'p'+Math.random().toString(36).slice(2,9),name:'Player '+(1+Math.floor(Math.random()*9)),ci:0};
 const pad={x:0,y:0,boost:false,fire:false,seq:0,drag:false,pid:null};
 
-/* ---------- audio / toast / misc ---------- */
+/* ---------- audio / toast / fullscreen ---------- */
 const A={c:null,mute:false,
  u(){if(!this.c){const C=window.AudioContext||window.webkitAudioContext;if(C)this.c=new C()}if(this.c&&this.c.state==='suspended')this.c.resume().catch(()=>{})},
  b(f,d,t,v,to){if(this.mute||!this.c)return;try{const n=this.c.currentTime,o=this.c.createOscillator(),g=this.c.createGain();o.type=t||'sine';o.frequency.setValueAtTime(f,n);if(to)o.frequency.exponentialRampToValueAtTime(to,n+d);g.gain.setValueAtTime(v||.1,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(this.c.destination);o.start(n);o.stop(n+d)}catch(e){}},
@@ -175,7 +183,8 @@ function copy(t,m){const f=()=>{const a=document.createElement('textarea');a.val
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast(m)).catch(f);else f()}
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
-function toggleFs(){A.u();const d=document.documentElement;try{if(!isFs()){const r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return toast('Fullscreen not supported');const p=r.call(d);if(p&&p.then)p.then(()=>{if(S.screen==='pad'&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}).catch(()=>toast('Fullscreen blocked here'))}else(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
+function syncFsUI(){const on=isFs();$$('[data-fs]').forEach(e=>{e.textContent=e.id==='lFs'?(on?'⤢ Exit Full':'⛶ Fullscreen'):(on?'⤢':'⛶')});if(on){$('fsBan').classList.add('hidden');$('lFs').classList.remove('hl')}setTimeout(resize,60)}
+function toggleFs(){A.u();const d=document.documentElement;try{if(!isFs()){const r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return toast('Fullscreen not supported');const p=r.call(d);if(p&&p.then)p.then(()=>{syncFsUI();if(S.screen==='pad'&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}).catch(()=>toast('Fullscreen blocked here'))}else{const ex=document.exitFullscreen||document.webkitExitFullscreen;if(ex)ex.call(document)}}catch(e){}}
 function toggleSnd(){A.u();A.mute=!A.mute;$$('[data-snd]').forEach(e=>e.textContent=A.mute?'🔇':'🔊')}
 
 /* ---------- entities ---------- */
@@ -197,20 +206,20 @@ const localP=()=>[...S.players.values()].find(p=>p.source==='local'&&!p.isBot);
 function setScreen(s){S.screen=s;
  ['title','lobby','join','pad'].forEach(k=>$(k).classList.toggle('hidden',s!==k));
  $('hud').classList.toggle('hidden',s!=='playing');
- const showCtl=s==='pad'||(s==='playing'&&!!localP()&&S.showCtl);
+ // Virtual touch controller shows on Phone Pad or in Solo Play (never keyboard!)
+ const showCtl=s==='pad'||(s==='playing'&&S.mode==='solo');
  $('ctl').classList.toggle('hidden',!showCtl);
- $('hCtl').classList.toggle('hidden',!(s==='playing'&&localP()));
  $('hRoom').classList.toggle('hidden',!(s==='playing'&&S.mode==='room'));
  if(s!=='playing'){S.paused=false;S.over=false;$('ov').classList.add('hidden');$('feed').innerHTML=''}
  renderHud()}
 function startMatch(mode){A.u();$('ov').classList.add('hidden');
- if(mode==='room'&&!S.phones.size&&!S.cfg.bots&&!S.cfg.host)return toast('Connect a phone, add a bot, or enable Host plays');
+ // Room mode strictly requires at least 1 connected phone controller
+ if(mode==='room'&&!S.phones.size)return toast('Connect your mobile phone first to control a player!');
  S.mode=mode;S.m=mode==='solo'?{dur:60,walls:true,pu:true}:{dur:S.cfg.time,walls:S.cfg.walls,pu:S.cfg.pu};
  S.time=S.m.dur;S.paused=false;S.over=false;S.shake=0;S.cd=3.6;S.feed=[];S.players.clear();resetArena();
  let bots;
- if(mode==='solo'){S.players.set('local-p1',Object.assign(mk('local-p1',me.name,me.ci,false,'local'),{}));bots=2}
- else{if(S.cfg.host)S.players.set('host',mk('host','Host',S.phones.size,false,'local'));
-  S.phones.forEach((ph,id)=>{ph.lastPulse=undefined;S.players.set(id,mk(id,ph.name,ph.ci,false,'remote'))});bots=S.cfg.bots}
+ if(mode==='solo'){S.players.set('local-p1',mk('local-p1',me.name,me.ci,false,'local'));bots=2}
+ else{S.phones.forEach((ph,id)=>{ph.lastPulse=undefined;S.players.set(id,mk(id,ph.name,ph.ci,false,'remote'))});bots=S.cfg.bots}
  for(let i=1;i<=bots;i++){const id='bot-'+i;S.players.set(id,mk(id,'Bot '+i,S.players.size+i,true,'bot'))}
  setScreen('playing')}
 function endMatch(){S.over=true;A.win();showOverlay(true);sendTel(true);setTimeout(()=>sendTel(true),350);setTimeout(()=>sendTel(true),800);renderHud()}
@@ -250,9 +259,7 @@ function botAI(b,dt){if(!b.alive)return;let tg=null,bv=-1e9;
  for(const o of S.players.values()){if(o.id===b.id||!o.alive)continue;const dx=o.x-b.x,dy=o.y-b.y,d=Math.hypot(dx,dy);
   if(d<110&&b.pCd<=0&&b.energy>45&&Math.random()<dt*.45){pulse(b);break}
   if(d<330&&b.energy>22&&Math.random()<dt*1.5){b.aim=Math.atan2(dy,dx);b.firing=true;break}}}
-function localInput(p){const k=S.keys,kx=(k.right?1:0)-(k.left?1:0),ky=(k.down?1:0)-(k.up?1:0);
- if(kx||ky){const m=Math.hypot(kx,ky);p.inputX=kx/m;p.inputY=ky/m}else{p.inputX=pad.x;p.inputY=pad.y}
- p.boosting=!!(k.boost||pad.boost);p.firing=!!(k.fire||pad.fire);if(k.pulse){p.pulseTrigger=true;k.pulse=false}}
+function virtualPadInput(p){p.inputX=pad.x;p.inputY=pad.y;p.boosting=!!pad.boost;p.firing=!!pad.fire}
 
 /* ---------- simulation ---------- */
 function sim(dt){
@@ -266,7 +273,7 @@ function sim(dt){
  const now=performance.now();
  S.players.forEach(p=>{
   if(!p.alive){p.rt-=dt;if(p.rt<=0){const s=spawnPt();p.x=s.x;p.y=s.y;p.vx=p.vy=0;p.hp=p.maxHp;p.energy=100;p.alive=true;p.inv=2;p.trail=[];burst(p.x,p.y,p.color,14)}return}
-  if(live&&p.source==='local')localInput(p);
+  if(live&&p.source==='local')virtualPadInput(p);
   else if(p.isBot)botAI(p,dt);
   else if(p.source==='remote'&&now-p.lastPkt>600){p.inputX=p.inputY=0;p.firing=p.boosting=false}
   if(p.isBot&&p.firing&&p.aim!=null)p.angle=p.aim;else if(Math.hypot(p.inputX,p.inputY)>.12)p.angle=Math.atan2(p.inputY,p.inputX);
@@ -338,8 +345,11 @@ function qr(id,text){const e=$(id);e.innerHTML='';try{if(window.QRCode){new QRCo
 function initBC(c){try{if(!window.BroadcastChannel)return;if(bc)bc.close();bc=new BroadcastChannel('neon_arena_'+c);
  bc.onmessage=ev=>{const m=ev.data;if(!m)return;if(S.screen==='pad'){if(m.type==='telemetry'&&m.id===me.id)onTel(m)}else applyPkt(m,'broadcast',null)}}catch(e){}}
 function renderLobby(){const l=[...S.phones.values()];$('lCnt').textContent=l.length;
- $('lList').innerHTML=l.length?l.map(p=>`<div class="pr"><span class="dot" style="background:${PAL[p.ci]};box-shadow:0 0 8px ${PAL[p.ci]}"></span><span style="flex:1">${esc(p.name)}</span><span style="color:#34d399;font-size:10px">READY</span></div>`).join(''):`<div class="pr" style="justify-content:center;color:#94a3b8">Waiting for players on code ${code}...</div>`}
-function dropPhone(id){if(S.phones.delete(id)){if(S.screen!=='playing')S.players.delete(id);else{const p=S.players.get(id);if(p){S.players.delete(id)}}renderLobby();renderHud()}}
+ const stBtn=$('lStart');
+ if(l.length>0){stBtn.classList.remove('wait');stBtn.textContent='▶ START MATCH ('+l.length+(l.length===1?' PHONE)':' PHONES)')}
+ else{stBtn.classList.add('wait');stBtn.textContent='📱 CONNECT AT LEAST 1 PHONE TO START'}
+ $('lList').innerHTML=l.length?l.map(p=>`<div class="pr"><span class="dot" style="background:${PAL[p.ci]};box-shadow:0 0 8px ${PAL[p.ci]}"></span><span style="flex:1">${esc(p.name)}</span><span style="color:#34d399;font-size:10px">READY</span></div>`).join(''):`<div class="pr" style="justify-content:center;color:#94a3b8">Waiting for phones on code ${code}...</div>`}
+function dropPhone(id){if(S.phones.delete(id)){S.players.delete(id);renderLobby();renderHud()}}
 function applyPkt(m,src,c){if(!m||typeof m!=='object')return;
  const id=String(m.id||'').replace(/[^\w-]/g,'').slice(0,16);if(!id)return;
  if(m.type==='leave')return dropPhone(id);
@@ -351,7 +361,7 @@ function applyPkt(m,src,c){if(!m||typeof m!=='object')return;
  const ap=S.players.get(id);
  if(ap){ap.name=ph.name;ap.ci=ph.ci;ap.color=PAL[ph.ci]}
  else if(S.screen==='playing'&&S.mode==='room'&&!S.over){S.players.set(id,mk(id,ph.name,ph.ci,false,'remote'))}
- if(isNew){toast(ph.name+' joined!');A.p('orb')}
+ if(isNew){toast(ph.name+' joined! Tap Fullscreen for best view.');A.p('orb');if(!isFs())$('lFs').classList.add('hl')}
  if(isNew||m.type==='profile')renderLobby();
  if(m.type==='input'){const p=S.players.get(id);if(p&&S.screen==='playing'&&S.mode==='room'&&!S.paused&&!S.over){const n=v=>Number.isFinite(+v)?Math.max(-1,Math.min(1,+v)):0;
   p.inputX=n(m.x);p.inputY=n(m.y);p.boosting=!!m.boost;p.firing=!!m.fire;p.lastPkt=performance.now();
@@ -359,10 +369,10 @@ function applyPkt(m,src,c){if(!m||typeof m!=='object')return;
 function openHost(c){code=c||genCode();S.phones.clear();$('lCode').textContent=code.split('').join(' ');$('hRoom').textContent=code;$('qrT').textContent=code.split('').join(' ');
  const u=joinUrl(code);qr('qr',u);qr('qr2',u);renderLobby();initBC(code);const st=$('lStat');
  if(hostPeer){try{hostPeer.destroy()}catch(e){}hostPeer=null}
- if(!window.Peer){st.textContent='Room '+code+' ready (same-browser tabs only: PeerJS failed to load)';return}
+ if(!window.Peer){st.textContent='Room '+code+' ready (same-browser tabs only)';return}
  st.textContent='Opening room '+code+'...';
  try{hostPeer=new Peer('neonarena-v2-'+code,{debug:0});
-  hostPeer.on('open',()=>st.textContent='Room '+code+' live: scan the QR or enter the code on phones');
+  hostPeer.on('open',()=>st.textContent='Room '+code+' live — scan QR or enter code on your phone');
   hostPeer.on('connection',c=>{c.on('data',d=>{try{applyPkt(typeof d==='string'?JSON.parse(d):d,'peerjs',c)}catch(e){}});
    c.on('close',()=>{S.phones.forEach((ph,id)=>{if(ph.conn===c)dropPhone(id)})})});
   hostPeer.on('error',e=>{if(e.type==='unavailable-id'){openHost(genCode())}else st.textContent='Room '+code+' ready (offline signaling: same-browser tabs only)'})
@@ -374,9 +384,10 @@ async function lockWake(){try{if(navigator.wakeLock)wake=await navigator.wakeLoc
 function joinRoom(raw){const c=String(raw).replace(/\D/g,'').slice(0,4);if(c.length!==4)return toast('Enter all 4 digits');A.u();code=c;
  me.name=($('jName').value||'Player').trim().slice(0,12)||'Player';$('pName').value=me.name;$('pRoom').textContent='Room '+c;
  initBC(c);setScreen('pad');sendProfile();lockWake();
+ if(!isFs())$('fsBan').classList.remove('hidden');
  if(window.Peer){try{if(peer)peer.destroy();peer=new Peer(undefined,{debug:0});
   peer.on('open',()=>{conn=peer.connect('neonarena-v2-'+c,{reliable:false});
-   conn.on('open',()=>{toast('Connected to room '+c);sendProfile()});
+   conn.on('open',()=>{toast('Connected to room '+c);if(!isFs())$('fsBan').classList.remove('hidden');sendProfile()});
    conn.on('data',d=>{if(d&&d.type==='telemetry'&&d.id===me.id)onTel(d)});
    conn.on('close',()=>toast('Disconnected from host'))});
   peer.on('error',e=>{if(e.type==='peer-unavailable')toast('Room not found: check the code')})}catch(e){}}
@@ -395,7 +406,7 @@ function sendTel(over){const n=performance.now();if(!over&&n-lastTel<150)return;
 setInterval(()=>{const n=performance.now();S.phones.forEach((ph,id)=>{if(n-(ph.seen||0)>5000)dropPhone(id)})},1000);
 let hb=0;setInterval(()=>{if(S.screen!=='pad')return;sendInput();if(++hb%30===0)sendProfile()},33);
 
-/* ---------- controls ---------- */
+/* ---------- virtual touch controller only ---------- */
 function bindJoy(){const b=$('joy'),k=$('knob');
  const mv=(x,y)=>{const r=b.getBoundingClientRect(),md=r.width*.34;let dx=x-(r.left+r.width/2),dy=y-(r.top+r.height/2);const d=Math.hypot(dx,dy);if(d>md){dx=dx/d*md;dy=dy/d*md}k.style.transform=`translate(${dx}px,${dy}px)`;pad.x=dx/md;pad.y=dy/md;if(S.screen==='pad')sendInput()};
  const rel=e=>{if(!pad.drag||e.pointerId!==pad.pid)return;pad.drag=false;pad.pid=null;pad.x=pad.y=0;k.style.transform='';if(S.screen==='pad')sendInput()};
@@ -419,7 +430,9 @@ $('bCreate').onclick=()=>{A.u();openHost(genCode());syncCfg();setScreen('lobby')
 $('bJoin').onclick=()=>{A.u();$('jName').value=me.name;swatches();setScreen('join')};
 $('bSolo').onclick=()=>startMatch('solo');
 $$('[data-fs]').forEach(b=>b.onclick=toggleFs);$$('[data-snd]').forEach(b=>b.onclick=toggleSnd);
-document.addEventListener('fullscreenchange',()=>{$$('[data-fs]').forEach(e=>e.textContent=isFs()?'⤢':'⛶');setTimeout(resize,60)});
+$('fsGo').onclick=toggleFs;$('fsNo').onclick=()=>$('fsBan').classList.add('hidden');
+document.addEventListener('fullscreenchange',syncFsUI);
+document.addEventListener('webkitfullscreenchange',syncFsUI);
 $('lBack').onclick=()=>{if(hostPeer){try{hostPeer.destroy()}catch(e){}hostPeer=null}S.phones.clear();initAttract();setScreen('title')};
 $('lRegen').onclick=()=>{openHost(genCode());toast('New room code: '+code)};
 $('lCopy').onclick=()=>copy(joinUrl(code),'Join link copied');
@@ -434,19 +447,14 @@ $('pName').addEventListener('input',e=>{me.name=e.target.value.trim().slice(0,12
 window.addEventListener('pagehide',()=>{if(S.screen==='pad')send({type:'leave',id:me.id})});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.screen==='pad')lockWake()});
 $('hRoom').onclick=()=>$('qrm').classList.remove('hidden');$('qrC').onclick=()=>$('qrm').classList.add('hidden');$('qrCp').onclick=()=>copy(joinUrl(code),'Join link copied');
-$('hCtl').onclick=()=>{S.showCtl=!S.showCtl;$('ctl').classList.toggle('hidden',!S.showCtl)};
 $('hPause').onclick=togglePause;
 $('ovP').onclick=()=>{A.u();if(S.over)startMatch(S.mode);else{S.paused=false;$('ov').classList.add('hidden')}};
 $('ovR').onclick=()=>startMatch(S.mode);
 $('ovX').onclick=()=>{if(S.mode==='room'){initAttract();setScreen('lobby')}else{initAttract();setScreen('title')}};
 
-/* keyboard */
-const KM={w:'up',arrowup:'up',s:'down',arrowdown:'down',a:'left',arrowleft:'left',d:'right',arrowright:'right',' ':'boost',f:'fire',j:'fire',enter:'fire'};
-addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;A.u();const k=e.key.toLowerCase();
- if(k==='escape'||k==='p')return togglePause();
- if(k==='shift'||k==='e')S.keys.pulse=true;else if(KM[k]){S.keys[KM[k]]=true;e.preventDefault()}});
-addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(KM[k])S.keys[KM[k]]=false});
-addEventListener('blur',()=>{S.keys={};pad.boost=pad.fire=false;pad.x=pad.y=0});
+/* Only Escape/P pauses on host screen — zero keyboard gameplay controls */
+addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();if(k==='escape'||k==='p')togglePause()});
+addEventListener('blur',()=>{pad.boost=pad.fire=false;pad.x=pad.y=0});
 addEventListener('resize',resize);
 
 /* boot */
