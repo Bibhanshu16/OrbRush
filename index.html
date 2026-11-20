@@ -51,20 +51,54 @@ input:focus{border-color:#e879f9}
 .pp b{font-family:monospace}
 #feed{position:fixed;right:12px;top:calc(max(10px,env(safe-area-inset-top)) + 50px);z-index:21;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none}
 #feed div{background:rgba(7,12,24,.8);border-left:3px solid;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800}
-#pad{background:#070b15;justify-content:flex-start;backdrop-filter:none}
-#padTop{width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px}
-#fsBan{background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.4);border-radius:12px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#bae6fd}
-.bar{height:10px;border-radius:9px;background:#0f172a;overflow:hidden;border:1px solid #1e293b}.bar i{display:block;height:100%;width:100%;transition:width .15s}
+#pad{background:radial-gradient(circle at 50% 0%,#0f1a33 0%,#070b15 62%);justify-content:flex-start;backdrop-filter:none;padding:max(10px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+#padTop{width:100%;max-width:680px;display:flex;flex-direction:column;gap:8px;z-index:2}
+.pad-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:rgba(10,16,32,.78);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:6px 10px}
+.pad-id{display:flex;align-items:center;gap:8px;min-width:0}
+.pad-meta{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pad-bars{display:flex;flex-direction:column;gap:5px;width:100%;max-width:520px;margin:0 auto}
+#fsBan{background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.4);border-radius:12px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#bae6fd}
+.bar{height:8px;border-radius:9px;background:#0f172a;overflow:hidden;border:1px solid #1e293b}.bar i{display:block;height:100%;width:100%;transition:width .15s}
 #vig{position:fixed;inset:0;z-index:36;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(239,68,68,.75);opacity:0;transition:opacity .25s}
-#ctl{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;justify-content:space-between;align-items:flex-end;padding:14px 18px max(18px,env(safe-area-inset-bottom));pointer-events:none}
+/* Pro Gamepad Layout: Comfortable Thumb Zones + Arc Action Cluster */
+#ctl{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(26px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(26px,env(safe-area-inset-left));pointer-events:none}
+#ctl.pad-mode{top:34%;align-items:center;padding:0 max(36px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(36px,env(safe-area-inset-left))}
 #ctl>*{pointer-events:auto;touch-action:none}
-#joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(15,23,42,.6),rgba(15,23,42,.85) 70%,rgba(56,189,248,.25));box-shadow:inset 0 0 24px #000a,0 0 0 2px rgba(125,211,252,.3);display:flex;align-items:center;justify-content:center}
-#knob{width:62px;height:62px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bae6fd,#0284c7 65%,#0369a1);pointer-events:none}
-.ab{display:flex;gap:10px;align-items:flex-end}
-.rb{border-radius:50%;border:2px solid rgba(255,255,255,.55);font:900 11px Inter,sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:none;transition:transform .07s,filter .07s;width:68px;height:68px}
+#joy{position:relative;width:154px;height:154px;border-radius:50%;background:radial-gradient(circle,rgba(15,23,42,.52) 0%,rgba(10,16,30,.86) 68%,rgba(56,189,248,.22) 100%);box-shadow:inset 0 0 28px rgba(0,0,0,.72),0 0 0 2px rgba(125,211,252,.28),0 10px 30px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+#joy::before{content:"";position:absolute;inset:22px;border-radius:50%;border:1px dashed rgba(148,163,184,.22);pointer-events:none}
+.j-dir{position:absolute;font-size:10px;font-weight:900;color:rgba(148,163,184,.38);pointer-events:none}
+.j-u{top:8px}.j-d{bottom:8px}.j-l{left:10px}.j-r{right:10px}
+#knob{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e0f2fe 0%,#38bdf8 35%,#0284c7 75%,#0369a1 100%);box-shadow:0 8px 22px rgba(2,132,199,.6),inset 0 2px 5px rgba(255,255,255,.65);border:1.5px solid rgba(255,255,255,.45);pointer-events:none}
+/* Ergonomic Right-Thumb Arc Cluster (like Brawl Stars / CoD Mobile / Console Pads) */
+.ab{position:relative;width:196px;height:186px;flex:none}
+.rb{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.5);font:900 10px Inter,sans-serif;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:none;transition:transform .07s,filter .07s,box-shadow .07s}
 .rb.pr2{transform:scale(.9);filter:brightness(1.25)}
-#bB{background:linear-gradient(135deg,#fbbf24,#ea580c);color:#1c1917}#bP{background:linear-gradient(135deg,#e879f9,#7e22ce)}#bF{background:linear-gradient(135deg,#fb7185,#dc2626);width:86px;height:86px;font-size:13px}
-.rb span{font-size:20px;line-height:1}
+/* Primary FIRE button in natural thumb resting spot (bottom-right) */
+#bF{right:2px;bottom:4px;width:96px;height:96px;font-size:12px;background:radial-gradient(circle at 35% 28%,#fda4af 0%,#f43f5e 45%,#be123c 100%);box-shadow:0 10px 28px rgba(244,63,94,.48),inset 0 2px 6px rgba(255,255,255,.45)}
+/* Secondary PULSE button curved directly above FIRE */
+#bP{right:18px;top:6px;width:72px;height:72px;background:radial-gradient(circle at 35% 28%,#f0abfc 0%,#c026d3 52%,#7e22ce 100%);box-shadow:0 8px 22px rgba(192,38,211,.42),inset 0 2px 5px rgba(255,255,255,.4)}
+/* Secondary BOOST button curved to the upper-left of FIRE */
+#bB{left:8px;bottom:34px;width:72px;height:72px;color:#1c1917;background:radial-gradient(circle at 35% 28%,#fde68a 0%,#f59e0b 52%,#ea580c 100%);box-shadow:0 8px 22px rgba(245,158,11,.42),inset 0 2px 5px rgba(255,255,255,.55)}
+.rb span{font-size:21px;line-height:1}
+#bF span{font-size:26px}
+@media(max-height:460px){
+ #padTop{gap:5px}
+ .pad-bar{padding:4px 8px;border-radius:12px}
+ #ctl.pad-mode{top:30%;padding:0 max(42px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(42px,env(safe-area-inset-left))}
+ #joy{width:142px;height:142px}
+ #knob{width:58px;height:58px}
+ .ab{width:184px;height:172px}
+ #bF{width:90px;height:90px}
+ #bP,#bB{width:66px;height:66px}
+}
+@media(max-width:420px){
+ #ctl{padding:0 14px max(18px,env(safe-area-inset-bottom)) 14px}
+ #joy{width:132px;height:132px}
+ #knob{width:54px;height:54px}
+ .ab{width:170px;height:164px}
+ #bF{width:84px;height:84px}
+ #bP,#bB{width:62px;height:62px}
+}
 #ov,#qrm{position:fixed;inset:0;z-index:40;background:rgba(5,8,17,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
 #qrm{z-index:50}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:60;padding:8px 16px;border-radius:99px;background:rgba(15,23,42,.95);border:1px solid rgba(56,189,248,.4);font-size:12px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
@@ -117,25 +151,35 @@ input:focus{border-color:#e879f9}
 </div></div>
 
 <div id="pad" class="scr hidden"><div id="padTop">
- <div class="row sp">
-  <button class="ic" id="pBack">◀</button>
-  <span id="pDot" class="dot"></span><input id="pName" maxlength="12" style="width:110px;padding:7px 9px;font-size:12px">
-  <b id="pRoom" style="font-size:11px;color:#34d399">Room ----</b>
-  <button class="ic" data-fs>⛶</button>
+ <div class="pad-bar">
+  <div class="pad-id">
+   <button class="ic" id="pBack" style="min-width:34px;height:34px">◀</button>
+   <span id="pDot" class="dot"></span>
+   <input id="pName" maxlength="12" style="width:104px;padding:6px 9px;font-size:12px">
+  </div>
+  <div class="row" id="pSw" style="gap:6px"></div>
+  <div class="pad-meta">
+   <b id="pRoom" style="font-size:11px;color:#34d399;white-space:nowrap">Room ----</b>
+   <button class="ic" data-fs style="min-width:34px;height:34px">⛶</button>
+  </div>
  </div>
  <div id="fsBan" class="hidden">
   <span>Connected! Tap for fullscreen gamepad</span>
   <div class="row" style="flex-wrap:nowrap"><button class="btn sm" style="width:auto;padding:6px 10px" id="fsGo">⛶ Fullscreen</button><button class="ic" style="min-width:28px;height:28px" id="fsNo">✕</button></div>
  </div>
- <div class="row" id="pSw"></div>
- <div class="row sp" style="font-size:11px;font-weight:900"><span style="color:#34d399">HP <span id="pHp">100</span></span><span id="pPu" style="color:#fbbf24"></span><span style="color:#38bdf8">SCORE <span id="pSc">0</span></span></div>
- <div class="bar"><i id="pHpB" style="background:linear-gradient(90deg,#34d399,#a3e635)"></i></div>
- <div class="bar" style="height:6px"><i id="pEnB" style="background:#fbbf24"></i></div>
+ <div class="pad-bars">
+  <div class="row sp" style="font-size:11px;font-weight:900"><span style="color:#34d399">HP <span id="pHp">100</span></span><span id="pPu" style="color:#fbbf24"></span><span style="color:#38bdf8">SCORE <span id="pSc">0</span></span></div>
+  <div class="bar"><i id="pHpB" style="background:linear-gradient(90deg,#34d399,#a3e635)"></i></div>
+  <div class="bar" style="height:5px"><i id="pEnB" style="background:#fbbf24"></i></div>
+ </div>
 </div></div>
 <div id="vig"></div>
 
 <div id="ctl" class="hidden">
- <div id="joy"><div id="knob"></div></div>
+ <div id="joy">
+  <span class="j-dir j-u">▲</span><span class="j-dir j-d">▼</span><span class="j-dir j-l">◀</span><span class="j-dir j-r">▶</span>
+  <div id="knob"></div>
+ </div>
  <div class="ab"><button class="rb" id="bB"><span>⚡</span>BOOST</button><button class="rb" id="bP"><span>💥</span>PULSE</button><button class="rb" id="bF"><span>🎯</span>FIRE</button></div>
 </div>
 
@@ -209,6 +253,7 @@ function setScreen(s){S.screen=s;
  // Virtual touch controller shows on Phone Pad or in Solo Play (never keyboard!)
  const showCtl=s==='pad'||(s==='playing'&&S.mode==='solo');
  $('ctl').classList.toggle('hidden',!showCtl);
+ $('ctl').classList.toggle('pad-mode',s==='pad');
  $('hRoom').classList.toggle('hidden',!(s==='playing'&&S.mode==='room'));
  if(s!=='playing'){S.paused=false;S.over=false;$('ov').classList.add('hidden');$('feed').innerHTML=''}
  renderHud()}
@@ -421,7 +466,7 @@ bindBtn('bF',()=>{pad.fire=true;vib(14);if(S.screen==='pad')sendInput()},()=>{pa
 bindBtn('bP',()=>{vib(32);if(S.screen==='pad'){pad.seq++;sendInput()}else{const p=localP();if(p)p.pulseTrigger=true}});
 
 /* ---------- UI wiring ---------- */
-function swatches(){['jSw','pSw'].forEach(id=>{const el=$(id);el.innerHTML=PAL.map((c,i)=>`<button class="sw${i===me.ci?' on':''}" data-i="${i}" style="background:${c};box-shadow:0 0 10px ${c}${id==='pSw'?';width:26px;height:26px':''}"></button>`).join('');
+function swatches(){['jSw','pSw'].forEach(id=>{const el=$(id);el.innerHTML=PAL.map((c,i)=>`<button class="sw${i===me.ci?' on':''}" data-i="${i}" style="background:${c};box-shadow:0 0 10px ${c}${id==='pSw'?';width:22px;height:22px':''}"></button>`).join('');
  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{me.ci=+b.dataset.i;swatches();if(S.screen==='pad')sendProfile()})});
  $('pDot').style.background=PAL[me.ci];$('pDot').style.boxShadow='0 0 10px '+PAL[me.ci]}
 function syncCfg(){$$('[data-time]').forEach(b=>b.classList.toggle('on',+b.dataset.time===S.cfg.time));$('botN').textContent=S.cfg.bots;
