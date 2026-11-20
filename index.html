@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -106,9 +108,10 @@
       <button id="hudTogglePadBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Toggle on-screen touch controller">
         🎮
       </button>
-      <button id="hudPairBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:border-emerald-400/60 transition" title="Pair Mobile Phone">
+      <button id="hudPairBtn" type="button" class="hud-pill px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-xs font-bold text-emerald-300 hover:border-emerald-400/60 transition" title="Room Code & QR Lobby">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="hidden sm:inline">Phones</span>
+        <span class="hidden sm:inline font-mono tracking-widest" id="hudRoomCode">----</span>
+        <span class="text-slate-500 hidden sm:inline">·</span>
         <span id="hudControllerCount" class="font-mono">1</span>
       </button>
       <button id="hudSoundBtn" type="button" class="hud-pill w-9 h-9 rounded-xl flex items-center justify-center text-sm hover:border-sky-400/60 transition" title="Mute / Unmute">
@@ -195,9 +198,17 @@
           </button>
         </div>
 
-        <button id="titlePairBtn" type="button" class="arcade-btn hud-pill w-full py-2.5 px-4 rounded-xl text-xs font-bold text-emerald-300 border-emerald-500/35 hover:border-emerald-400/70 flex items-center justify-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>PAIR MOBILE CONTROLLER (NO SERVER)</span>
+        <button id="titlePairBtn" type="button" class="arcade-btn hud-pill w-full py-2.5 px-3.5 rounded-2xl text-left border-emerald-500/35 hover:border-emerald-400/70 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div id="titleQrMini" class="w-12 h-12 rounded-lg bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden"></div>
+            <div class="min-w-0">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Scan QR or Enter Code</div>
+              <div id="titleRoomCode" class="text-xl font-black font-mono tracking-[0.28em] text-white leading-tight">----</div>
+            </div>
+          </div>
+          <span class="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold shrink-0">
+            QR &amp; Join
+          </span>
         </button>
       </div>
 
@@ -287,6 +298,14 @@
       </div>
     </div>
 
+    <!-- Quick 4-Digit Join Bar on Phone Pad -->
+    <div id="padQuickJoinBar" class="hud-pill rounded-2xl p-2 flex items-center gap-2 max-w-md w-full mx-auto">
+      <input id="padQuickCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="4-Digit Code" class="flex-1 min-w-0 text-center text-sm font-black font-mono tracking-[0.3em] py-2 px-3 rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-400 text-white focus:outline-none" />
+      <button id="padQuickJoinBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shrink-0 transition">
+        JOIN
+      </button>
+    </div>
+
     <!-- Bottom Live Telemetry Strip -->
     <div class="hud-pill rounded-2xl px-4 py-2.5 flex items-center justify-between text-xs font-bold">
       <span class="text-slate-400">ENERGY <strong id="padEnergyText" class="text-amber-400 ml-1">100%</strong></span>
@@ -331,20 +350,64 @@
         <button id="closePairModalBtn" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-bold">✕</button>
       </div>
 
-      <div class="flex gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 mb-4">
-        <button id="tabWebRTCHost" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">
-          1. TV Host
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 mb-4">
+        <button id="tabQrRoom" type="button" class="py-2 px-2 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">
+          QR &amp; Code
         </button>
-        <button id="tabWebRTCPad" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-          2. Phone Pad
+        <button id="tabWebRTCHost" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+          Manual TV
         </button>
-        <button id="tabBroadcast" type="button" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
-          3. Same Browser
+        <button id="tabWebRTCPad" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+          Manual Pad
+        </button>
+        <button id="tabBroadcast" type="button" class="py-2 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition">
+          Same Browser
         </button>
       </div>
 
+      <!-- TAB 0: QR CODE & 4-DIGIT ROOM CODE -->
+      <div id="paneQrRoom" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- TV Host QR + 4-Digit Code -->
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center space-y-3">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-400">Host Room (TV Screen)</span>
+            <div id="lobbyQrBox" class="w-40 h-40 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-lg"></div>
+            <div class="space-y-1">
+              <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">4-Digit Room Code</div>
+              <div id="lobbyRoomCode" class="text-3xl font-black font-mono tracking-[0.3em] text-white">----</div>
+            </div>
+            <div class="flex items-center gap-1.5 w-full">
+              <button id="copyRoomLinkBtn" type="button" class="flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 transition">
+                Copy Join Link
+              </button>
+              <button id="regenRoomCodeBtn" type="button" class="py-1.5 px-2.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" title="Generate New Code">
+                ↻
+              </button>
+            </div>
+            <div id="peerHostStatus" class="text-[11px] text-emerald-300 font-medium">Room ready for phones</div>
+          </div>
+
+          <!-- Phone Player 4-Digit Code Join -->
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div class="space-y-2.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-fuchsia-400 block">Join as Phone Player</span>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Scan the QR code with your phone camera, or type the <strong>4-digit code</strong> shown on the TV screen below.
+              </p>
+              <input id="joinCodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="1234" class="w-full text-center text-2xl font-black font-mono tracking-[0.45em] py-3 px-3 rounded-xl bg-slate-950 border-2 border-slate-700 focus:border-fuchsia-400 text-white focus:outline-none" />
+              <button id="joinCodeSubmitBtn" type="button" class="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-400 hover:to-purple-500 text-white shadow-lg shadow-fuchsia-500/25 transition">
+                JOIN WITH 4-DIGIT CODE
+              </button>
+            </div>
+            <div class="space-y-1.5 pt-2 border-t border-slate-800">
+              <div id="joinCodeStatus" class="text-[11px] text-slate-400">Works via PeerJS WebRTC P2P &amp; multi-tab BroadcastChannel.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB 1: TV HOST WEBRTC -->
-      <div id="paneWebRTCHost" class="space-y-3.5">
+      <div id="paneWebRTCHost" class="hidden space-y-3.5">
         <div class="p-3.5 rounded-2xl bg-slate-900/75 border border-slate-800 space-y-2">
           <div class="flex items-center justify-between gap-2">
             <span class="text-xs font-bold text-sky-400">Step 1 · Generate Offer Code on TV</span>
@@ -1341,6 +1404,10 @@
             p1.firing = payload.fire;
             if (payload.pulse) p1.pulseTrigger = true;
           }
+        } else if (padState.transport === 'peerjs') {
+          if (padPeerConn && padPeerConn.open) {
+            try { padPeerConn.send(payload); } catch (_) {}
+          }
         } else if (padState.transport === 'webrtc') {
           if (padRtcChannel && padRtcChannel.readyState === 'open') {
             try { padRtcChannel.send(JSON.stringify(payload)); } catch (_) {}
@@ -1458,9 +1525,177 @@
       const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
       let pendingHostPC = null;
       const hostRemotePeers = new Map();
+      const hostPeerJsConns = new Map();
+      let hostPeerJs = null;
+      let padPeerJs = null;
+      let padPeerConn = null;
       let padRtcPC = null;
       let padRtcChannel = null;
       let bcChannel = null;
+      let activeRoomCode = '';
+
+      function generateRoomCode() {
+        return String(Math.floor(1000 + Math.random() * 9000));
+      }
+
+      function getJoinUrl(code) {
+        try {
+          if (window.location && window.location.protocol && window.location.protocol.startsWith('http')) {
+            const base = window.location.origin + window.location.pathname;
+            return base + '?room=' + code;
+          }
+        } catch (_) {}
+        return 'NEON-ARENA-ROOM:' + code;
+      }
+
+      function renderQrInto(elId, text, size) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.innerHTML = '';
+        try {
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(el, {
+              text: text,
+              width: size,
+              height: size,
+              colorDark: '#050811',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+            return;
+          }
+        } catch (_) {}
+        // Clean SVG fallback if CDN QR library is unavailable
+        el.innerHTML = '<div class="text-[10px] font-mono font-black text-slate-900 leading-tight p-1 text-center">CODE<br/>' + activeRoomCode + '</div>';
+      }
+
+      function setupHostRoom(code) {
+        activeRoomCode = code || generateRoomCode();
+        const joinUrl = getJoinUrl(activeRoomCode);
+        const spaced = activeRoomCode.split('').join(' ');
+
+        const titleCodeEl = document.getElementById('titleRoomCode');
+        const lobbyCodeEl = document.getElementById('lobbyRoomCode');
+        const hudCodeEl = document.getElementById('hudRoomCode');
+        if (titleCodeEl) titleCodeEl.textContent = activeRoomCode;
+        if (lobbyCodeEl) lobbyCodeEl.textContent = spaced;
+        if (hudCodeEl) hudCodeEl.textContent = activeRoomCode;
+
+        renderQrInto('titleQrMini', joinUrl, 40);
+        renderQrInto('lobbyQrBox', joinUrl, 140);
+
+        // Re-bind BroadcastChannel for this room code
+        initBroadcastChannel(activeRoomCode);
+
+        // Initialize PeerJS serverless signaling host for cross-device QR/4-digit joins
+        const statusEl = document.getElementById('peerHostStatus');
+        if (hostPeerJs) {
+          try { hostPeerJs.destroy(); } catch (_) {}
+          hostPeerJs = null;
+        }
+        if (typeof Peer === 'undefined') {
+          if (statusEl) statusEl.textContent = 'Local/Tab room ' + activeRoomCode + ' ready';
+          return;
+        }
+        if (statusEl) statusEl.textContent = 'Opening room ' + activeRoomCode + '...';
+        try {
+          const peerId = 'neon-arena-room-' + activeRoomCode;
+          hostPeerJs = new Peer(peerId, { debug: 0 });
+          hostPeerJs.on('open', () => {
+            if (statusEl) statusEl.textContent = 'Live P2P Room ' + activeRoomCode + ' ready for phones!';
+          });
+          hostPeerJs.on('connection', (conn) => {
+            const pid = 'pjs-' + (conn.peer ? conn.peer.slice(-4) : Math.floor(1000 + Math.random() * 9000));
+            conn.on('open', () => {
+              hostPeerJsConns.set(pid, conn);
+              showToast('Phone joined room ' + activeRoomCode + '!');
+              closePairModal();
+            });
+            conn.on('data', (data) => {
+              try {
+                const msg = typeof data === 'string' ? JSON.parse(data) : data;
+                if (msg && msg.type === 'input') {
+                  msg.id = pid;
+                  msg.source = 'peerjs';
+                  applyRemoteInput(msg);
+                }
+              } catch (_) {}
+            });
+            conn.on('close', () => {
+              hostPeerJsConns.delete(pid);
+              state.players.delete(pid);
+              renderHud();
+              showToast('A phone left the room.');
+            });
+          });
+          hostPeerJs.on('error', () => {
+            if (statusEl) statusEl.textContent = 'Room ' + activeRoomCode + ' active (use Manual WebRTC or host file for cross-device P2P)';
+          });
+        } catch (_) {
+          if (statusEl) statusEl.textContent = 'Room ' + activeRoomCode + ' ready locally';
+        }
+      }
+
+      function joinRoomByCode(rawCode) {
+        const clean = String(rawCode || '').replace(/\D/g, '').slice(0, 4);
+        const statusEl = document.getElementById('joinCodeStatus');
+        if (clean.length !== 4) {
+          showToast('Enter a valid 4-digit room code.');
+          if (statusEl) statusEl.textContent = 'Please enter all 4 digits.';
+          return;
+        }
+
+        // Always connect BroadcastChannel for same-browser 4-digit testing
+        initBroadcastChannel(clean);
+        padState.transport = 'broadcast';
+        updatePadConnectionUI('Room ' + clean, 'indigo');
+        document.getElementById('padQuickJoinBar').classList.add('hidden');
+        setScreen('pad');
+
+        // Also attempt PeerJS WebRTC P2P connection to the TV Host room
+        if (typeof Peer !== 'undefined') {
+          if (statusEl) statusEl.textContent = 'Connecting to room ' + clean + '...';
+          try {
+            if (padPeerJs) { try { padPeerJs.destroy(); } catch (_) {} }
+            padPeerJs = new Peer(undefined, { debug: 0 });
+            padPeerJs.on('open', () => {
+              const conn = padPeerJs.connect('neon-arena-room-' + clean, { reliable: false });
+              padPeerConn = conn;
+              conn.on('open', () => {
+                padState.transport = 'peerjs';
+                updatePadConnectionUI('Room ' + clean + ' P2P', 'emerald');
+                showToast('Connected to TV Room ' + clean + '!');
+                closePairModal();
+                // Send an initial ping so TV immediately spawns this player
+                sendPadInput(false);
+              });
+              conn.on('data', (data) => {
+                try {
+                  const d = typeof data === 'string' ? JSON.parse(data) : data;
+                  if (d && d.type === 'telemetry') {
+                    document.getElementById('padScoreText').textContent = String(d.score);
+                    document.getElementById('padEnergyText').textContent = d.energy + '%';
+                    if (d.label) document.getElementById('padPlayerLabel').textContent = d.label;
+                  }
+                } catch (_) {}
+              });
+              conn.on('close', () => {
+                padState.transport = 'broadcast';
+                updatePadConnectionUI('Disconnected', 'sky');
+                document.getElementById('padQuickJoinBar').classList.remove('hidden');
+                showToast('Disconnected from TV Room.');
+              });
+            });
+            padPeerJs.on('error', () => {
+              if (statusEl) statusEl.textContent = 'Linked to Room ' + clean + ' via Tab Link.';
+            });
+          } catch (_) {}
+        }
+
+        closePairModal();
+        showToast('Joined Room ' + clean + '!');
+        sendPadInput(false);
+      }
 
       function applyRemoteInput(msg) {
         if (!msg || msg.type !== 'input') return;
@@ -1491,6 +1726,13 @@
           const p = state.players.get(pid);
           if (p && peer.dc && peer.dc.readyState === 'open') {
             try { peer.dc.send(JSON.stringify({ type: 'telemetry', score: p.score, energy: Math.round(p.energy), label: p.label })); } catch (_) {}
+          }
+        });
+
+        hostPeerJsConns.forEach((conn, pid) => {
+          const p = state.players.get(pid);
+          if (p && conn && conn.open) {
+            try { conn.send({ type: 'telemetry', score: p.score, energy: Math.round(p.energy), label: p.label }); } catch (_) {}
           }
         });
 
@@ -1630,10 +1872,12 @@
         copyText(document.getElementById('padAnswerOutput').value, 'Reply code copied!');
       });
 
-      function initBroadcastChannel() {
+      function initBroadcastChannel(roomCode) {
         try {
           if (typeof BroadcastChannel === 'undefined') return;
-          bcChannel = new BroadcastChannel('airpad_serverless_v1');
+          if (bcChannel) { try { bcChannel.close(); } catch (_) {} }
+          const chName = roomCode ? ('airpad_room_' + roomCode) : 'airpad_serverless_v1';
+          bcChannel = new BroadcastChannel(chName);
           bcChannel.onmessage = (ev) => {
             const msg = ev.data;
             if (!msg) return;
@@ -1708,18 +1952,19 @@
 
       function setPairTab(tab) {
         const map = {
+          qr: [document.getElementById('tabQrRoom'), document.getElementById('paneQrRoom')],
           host: [document.getElementById('tabWebRTCHost'), document.getElementById('paneWebRTCHost')],
           pad: [document.getElementById('tabWebRTCPad'), document.getElementById('paneWebRTCPad')],
           bc: [document.getElementById('tabBroadcast'), document.getElementById('paneBroadcast')]
         };
         Object.entries(map).forEach(([k, [btn, pane]]) => {
-          btn.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition ' + (k === tab ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
+          btn.className = 'py-2 px-2 rounded-lg text-xs font-bold transition ' + (k === tab ? 'bg-sky-500 text-slate-950' : 'text-slate-300 hover:text-white');
           pane.classList.toggle('hidden', k !== tab);
         });
       }
 
       function openPairModal(defaultTab) {
-        setPairTab(defaultTab || (state.screen === 'pad' ? 'pad' : 'host'));
+        setPairTab(defaultTab || 'qr');
         document.getElementById('pairModal').classList.remove('hidden');
       }
       function closePairModal() {
@@ -1733,7 +1978,7 @@
         AudioFX.unlock();
         setScreen('pad');
       });
-      document.getElementById('titlePairBtn').addEventListener('click', () => openPairModal('host'));
+      document.getElementById('titlePairBtn').addEventListener('click', () => openPairModal('qr'));
       document.getElementById('titleSoundBtn').addEventListener('click', toggleSound);
       document.getElementById('titleGuideBtn').addEventListener('click', () => document.getElementById('guideModal').classList.remove('hidden'));
       document.getElementById('menuMode60Btn').addEventListener('click', () => { state.endless = false; syncMenuSettingsUI(); });
@@ -1748,7 +1993,7 @@
         document.getElementById('touchOverlay').classList.toggle('hidden', !state.showTouchOverlay);
         showToast(state.showTouchOverlay ? 'On-screen controller shown' : 'On-screen controller hidden');
       });
-      document.getElementById('hudPairBtn').addEventListener('click', () => openPairModal('host'));
+      document.getElementById('hudPairBtn').addEventListener('click', () => openPairModal('qr'));
       document.getElementById('hudSoundBtn').addEventListener('click', toggleSound);
       document.getElementById('hudPauseBtn').addEventListener('click', () => {
         if (state.gameOver) return;
@@ -1773,11 +2018,31 @@
       // Phone pad screen actions
       document.getElementById('padBackToTitleBtn').addEventListener('click', () => setScreen('title'));
       document.getElementById('padSwitchColorBtn').addEventListener('click', cyclePlayerColor);
-      document.getElementById('padOpenPairBtn').addEventListener('click', () => openPairModal('pad'));
+      document.getElementById('padOpenPairBtn').addEventListener('click', () => openPairModal('qr'));
 
       // Pairing & Guide modals
       document.getElementById('closePairModalBtn').addEventListener('click', closePairModal);
+      document.getElementById('tabQrRoom').addEventListener('click', () => setPairTab('qr'));
       document.getElementById('tabWebRTCHost').addEventListener('click', () => setPairTab('host'));
+      document.getElementById('copyRoomLinkBtn').addEventListener('click', () => {
+        copyText(getJoinUrl(activeRoomCode), 'Join link copied (Room ' + activeRoomCode + ')!');
+      });
+      document.getElementById('regenRoomCodeBtn').addEventListener('click', () => {
+        setupHostRoom(generateRoomCode());
+        showToast('New Room Code: ' + activeRoomCode);
+      });
+      document.getElementById('joinCodeSubmitBtn').addEventListener('click', () => {
+        joinRoomByCode(document.getElementById('joinCodeInput').value);
+      });
+      document.getElementById('joinCodeInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') joinRoomByCode(e.currentTarget.value);
+      });
+      document.getElementById('padQuickJoinBtn').addEventListener('click', () => {
+        joinRoomByCode(document.getElementById('padQuickCodeInput').value);
+      });
+      document.getElementById('padQuickCodeInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') joinRoomByCode(e.currentTarget.value);
+      });
       document.getElementById('tabWebRTCPad').addEventListener('click', () => setPairTab('pad'));
       document.getElementById('tabBroadcast').addEventListener('click', () => setPairTab('bc'));
       document.getElementById('closeGuideModalBtn').addEventListener('click', () => document.getElementById('guideModal').classList.add('hidden'));
@@ -1816,11 +2081,26 @@
       window.addEventListener('resize', resizeCanvas);
 
       window.onload = function () {
-        initBroadcastChannel();
         resizeCanvas();
         initGame();
         syncMenuSettingsUI();
-        setScreen('title');
+        setupHostRoom(generateRoomCode());
+
+        // Auto-join as Phone Controller when opened via QR code (?room=XXXX)
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const qrRoom = params.get('room');
+          if (qrRoom && /^\d{4}$/.test(qrRoom)) {
+            document.getElementById('joinCodeInput').value = qrRoom;
+            document.getElementById('padQuickCodeInput').value = qrRoom;
+            joinRoomByCode(qrRoom);
+          } else {
+            setScreen('title');
+          }
+        } catch (_) {
+          setScreen('title');
+        }
+
         if (state.rafId) cancelAnimationFrame(state.rafId);
         state.rafId = requestAnimationFrame(gameLoop);
       };
